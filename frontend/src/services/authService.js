@@ -1,4 +1,5 @@
 import api from './api';
+import { API_URL } from '../utils/constants';
 
 export const authService = {
   getCurrentUser: async () => {
@@ -13,7 +14,7 @@ export const authService = {
       return response.data;
     } else {
       // Redirect to Google OAuth
-      window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/auth/google`;
+      window.location.href = `${API_URL}/auth/google`;
     }
   },
 
@@ -31,7 +32,7 @@ export const authService = {
 
   // Google OAuth (for students)
   googleLogin: () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/auth/google`;
+    window.location.href = `${API_URL}/auth/google`;
   },
 
   logout: async () => {
