@@ -2,8 +2,15 @@ const { Notification } = require('../models');
 
 /**
  * Create notification
+ * @param {string} userId - User ID
+ * @param {string} type - Notification type
+ * @param {string} title - Notification title
+ * @param {string} message - Notification message
+ * @param {string|null} link - Optional link
+ * @param {Object|null} transaction - Optional Sequelize transaction
  */
-const createNotification = async (userId, type, title, message, link = null) => {
+const createNotification = async (userId, type, title, message, link = null, transaction = null) => {
+  const options = transaction ? { transaction } : {};
   return await Notification.create({
     user_id: userId,
     type,
@@ -11,7 +18,7 @@ const createNotification = async (userId, type, title, message, link = null) => 
     message,
     link,
     is_read: false
-  });
+  }, options);
 };
 
 /**

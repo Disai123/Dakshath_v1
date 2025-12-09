@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { Company, HRUser, User, JobListing } = require('../models');
+const { Company, HRUser, User, JobListing, sequelize } = require('../models');
 const { formatResponse, paginate } = require('../utils/helpers');
 const { NotFoundError, AuthorizationError, ValidationError, ConflictError } = require('../utils/errors');
 const { createNotification } = require('../services/notificationService');
@@ -46,88 +46,139 @@ const registerCompany = async (req, res, next) => {
       throw new ValidationError('Password must be at least 6 characters long');
     }
 
-    // Check if company already exists
-    const existingCompany = await Company.findOne({
+    // Normalize email for consistent checking
+    const normalizedEmail = hr_email.toLowerCase().trim();
+
+    // Check if company already exists by name
+    const existingCompanyByName = await Company.findOne({
       where: { company_name: company_name.trim() }
     });
 
-    if (existingCompany) {
+    if (existingCompanyByName) {
       throw new ConflictError('Company with this name already exists');
+    }
+
+    // Check if company already exists by email (since email is unique)
+    const existingCompanyByEmail = await Company.findOne({
+      where: { email: normalizedEmail }
+    });
+
+    if (existingCompanyByEmail) {
+      throw new ConflictError('A company with this email already exists. Please use a different email address.');
     }
 
     // Check if HR user email already exists
     const existingUser = await User.findOne({
-      where: { email: hr_email.toLowerCase().trim() }
+      where: { email: normalizedEmail }
     });
 
     if (existingUser) {
-      throw new ConflictError('User with this email already exists');
+      throw new ConflictError('User with this email already exists. Please use a different email address.');
     }
 
-    // Create company with pending status
-    // Use HR email as company email (required field)
-    const company = await Company.create({
-      company_name: company_name.trim(),
-      email: hr_email.toLowerCase().trim(), // Use HR email as company email
-      description: description?.trim() || null,
-      website: website?.trim() || null,
-      industry: industry?.trim() || null,
-      location: location?.trim() || null,
-      phone: phone?.trim() || null,
-      employee_count: employee_count || null,
-      status: 'pending' // Will be approved by admin
-    });
+    // Use transaction to ensure atomicity - if any step fails, rollback everything
+    const transaction = await sequelize.transaction();
 
-    // Hash password for HR user
-    const hashedPassword = await bcrypt.hash(hr_password, 12);
+    try {
+      // Create company with pending status
+      // Use HR email as company email (required field)
+      const company = await Company.create({
+        company_name: company_name.trim(),
+        email: normalizedEmail, // Use HR email as company email
+        description: description?.trim() || null,
+        website: website?.trim() || null,
+        industry: industry?.trim() || null,
+        location: location?.trim() || null,
+        phone: phone?.trim() || null,
+        employee_count: employee_count || null,
+        status: 'pending' // Will be approved by admin
+      }, { transaction });
 
-    // Create HR user account
-    // Generate UUID for user id
-    const hrUser = await User.create({
-      id: uuidv4(),
-      name: hr_name.trim(),
-      email: hr_email.toLowerCase().trim(),
-      password: hashedPassword,
-      role: 'hr',
-      is_active: true
-    });
+      // Hash password for HR user
+      const hashedPassword = await bcrypt.hash(hr_password, 12);
 
-    // Link HR user to company
-    const hrUserRecord = await HRUser.create({
-      user_id: hrUser.id,
-      company_id: company.id,
-      is_active: true
-    });
+      // Create HR user account
+      // Generate UUID for user id
+      const hrUser = await User.create({
+        id: uuidv4(),
+        name: hr_name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: 'hr',
+        is_active: true
+      }, { transaction });
 
-    // Create notification for admin about new company registration
-    const adminUsers = await User.findAll({
-      where: { role: 'admin', is_active: true }
-    });
+      // Link HR user to company
+      const hrUserRecord = await HRUser.create({
+        user_id: hrUser.id,
+        company_id: company.id,
+        is_active: true
+      }, { transaction });
 
-    for (const admin of adminUsers) {
-      await createNotification(
-        admin.id,
-        'new_company_registration',
-        'New Company Registration',
-        `New company "${company.company_name}" has registered and is pending approval.`,
-        `/admin/companies`
-      );
+      // Create notification for admin about new company registration
+      const adminUsers = await User.findAll({
+        where: { role: 'admin', is_active: true },
+        transaction
+      });
+
+      for (const admin of adminUsers) {
+        await createNotification(
+          admin.id,
+          'new_company_registration',
+          'New Company Registration',
+          `New company "${company.company_name}" has registered and is pending approval.`,
+          `/admin/companies`,
+          transaction
+        );
+      }
+
+      // Commit transaction if everything succeeds
+      await transaction.commit();
+
+      // Return success response with company data
+      return res.status(201).json(formatResponse({
+        company: {
+          id: company.id,
+          company_name: company.company_name,
+          status: company.status
+        },
+        hr_user: {
+          id: hrUser.id,
+          email: hrUser.email,
+          name: hrUser.name
+        },
+        message: 'Company registration successful. Your account is pending admin approval. You will receive an email notification once approved.'
+      }, 'Company registered successfully. Please wait for admin approval.'));
+    } catch (transactionError) {
+      // Rollback transaction on any error
+      await transaction.rollback();
+      
+      // If it's a Sequelize unique constraint error, provide a more specific message
+      if (transactionError.name === 'SequelizeUniqueConstraintError') {
+        const field = transactionError.errors?.[0]?.path || 'field';
+        if (field === 'email') {
+          throw new ConflictError('A company or user with this email already exists. Please use a different email address.');
+        } else if (field === 'company_name') {
+          throw new ConflictError('Company with this name already exists.');
+        } else {
+          throw new ConflictError(`A record with this ${field} already exists.`);
+        }
+      }
+      // Re-throw other errors to be handled by outer catch
+      throw transactionError;
     }
-
-    res.status(201).json(formatResponse({
-      company: {
-        id: company.id,
-        company_name: company.company_name,
-        status: company.status
-      },
-      hr_user: {
-        id: hrUser.id,
-        email: hrUser.email,
-        name: hrUser.name
-      },
-      message: 'Company registration successful. Your account is pending admin approval. You will receive an email notification once approved.'
-    }, 'Company registered successfully. Please wait for admin approval.'));
   } catch (error) {
+    // If it's a Sequelize unique constraint error that wasn't caught in transaction, provide a more specific message
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      const field = error.errors?.[0]?.path || 'field';
+      if (field === 'email') {
+        return next(new ConflictError('A company or user with this email already exists. Please use a different email address.'));
+      } else if (field === 'company_name') {
+        return next(new ConflictError('Company with this name already exists.'));
+      } else {
+        return next(new ConflictError(`A record with this ${field} already exists.`));
+      }
+    }
     next(error);
   }
 };
