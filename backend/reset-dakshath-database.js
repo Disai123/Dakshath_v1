@@ -4,8 +4,7 @@ const { sequelize } = require('./models');
 const { User, Company, HRUser, JobListing, Application, ApplicationStatusHistory, StudentScore, Notification, JobCategory } = require('./models');
 const bcrypt = require('bcryptjs');
 
-// Use Node.js built-in crypto.randomUUID() instead of uuid package
-const uuidv4 = () => crypto.randomUUID();
+// Note: User IDs are now INTEGER (auto-increment) to match shared database schema
 
 /**
  * Reset Dakshath Database
@@ -159,7 +158,6 @@ async function seedDefaultData() {
     if (!adminUser) {
       const hashedPassword = await bcrypt.hash('admin123', 12);
       adminUser = await User.create({
-        id: uuidv4(),
         name: 'System Administrator',
         email: 'admin@lms.com',
         password: hashedPassword,
@@ -236,7 +234,6 @@ async function seedDefaultData() {
       if (!existingStudent) {
         const hashedPassword = await bcrypt.hash(studentData.password, 12);
         await User.create({
-          id: uuidv4(),
           name: studentData.name,
           email: studentData.email,
           password: hashedPassword,
@@ -314,7 +311,6 @@ async function seedDefaultData() {
       if (!hrUser) {
         const hashedPassword = await bcrypt.hash('hr123456', 12);
         hrUser = await User.create({
-          id: uuidv4(),
           name: `HR Manager - ${company.company_name}`,
           email: hrEmail,
           password: hashedPassword,

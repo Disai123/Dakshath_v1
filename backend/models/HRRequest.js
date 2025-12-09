@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'pending'
     },
     processed_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
