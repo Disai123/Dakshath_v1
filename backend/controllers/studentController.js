@@ -1,7 +1,7 @@
 const { User, sequelize } = require('../models');
 const { formatResponse } = require('../utils/helpers');
 const { NotFoundError, AuthorizationError } = require('../utils/errors');
-const { getStudentScore } = require('../services/scoreService');
+const { getStudentScore, getTopStudents } = require('../services/scoreService');
 
 /**
  * Get student profile
@@ -68,33 +68,39 @@ const getStudentProfile = async (req, res, next) => {
       }
     );
 
-    // Get certificates (from LMS)
+    // Get certificates (from LMS) - fixed column names
     const certificates = await sequelize.query(
       `SELECT 
-        id,
-        certificate_name,
-        certificate_url,
-        issued_at
-       FROM certificates
-       WHERE student_id = :studentId
-       ORDER BY issued_at DESC`,
+        c.id,
+        c.course_id,
+        co.title as course_title,
+        c.certificate_url,
+        c.issued_date as issued_at,
+        c.is_valid
+       FROM certificates c
+       JOIN courses co ON c.course_id = co.id
+       WHERE c.student_id = :studentId AND c.is_valid = true
+       ORDER BY c.issued_date DESC`,
       {
         replacements: { studentId },
         type: sequelize.QueryTypes.SELECT
       }
     );
 
-    // Get achievements (from LMS)
+    // Get achievements (from LMS student_achievements table)
     const achievements = await sequelize.query(
       `SELECT 
-        id,
-        achievement_type,
-        achievement_name,
-        description,
-        unlocked_at
-       FROM achievements
-       WHERE student_id = :studentId
-       ORDER BY unlocked_at DESC`,
+        sa.id,
+        sa.achievement_type,
+        sa.source_id,
+        sa.source_type,
+        sa.points_awarded,
+        sa.awarded_at,
+        sa.metadata,
+        sa.is_active
+       FROM student_achievements sa
+       WHERE sa.student_id = :studentId AND sa.is_active = true
+       ORDER BY sa.awarded_at DESC`,
       {
         replacements: { studentId },
         type: sequelize.QueryTypes.SELECT
@@ -107,7 +113,7 @@ const getStudentProfile = async (req, res, next) => {
         hp.id,
         hp.score,
         h.id as hackathon_id,
-        h.title as hackathon_title,
+        h.name as hackathon_title,
         h.start_date,
         h.end_date
        FROM hackathon_participants hp
@@ -198,6 +204,60 @@ const getStudentCourses = async (req, res, next) => {
 };
 
 /**
+ * Get student achievements
+ */
+const getStudentAchievements = async (req, res, next) => {
+  try {
+    const studentId = req.params.id || req.user.id;
+
+    // Check authorization
+    if (req.user.role === 'student' && studentId != req.user.id) {
+      throw new AuthorizationError('Not authorized');
+    }
+
+    const achievements = await sequelize.query(
+      `SELECT 
+        sa.id,
+        sa.achievement_type,
+        sa.source_id,
+        sa.source_type,
+        sa.points_awarded,
+        sa.awarded_at,
+        sa.metadata,
+        sa.is_active
+       FROM student_achievements sa
+       WHERE sa.student_id = :studentId AND sa.is_active = true
+       ORDER BY sa.awarded_at DESC`,
+      {
+        replacements: { studentId },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    // Group by achievement type
+    const grouped = achievements.reduce((acc, achievement) => {
+      const type = achievement.achievement_type;
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(achievement);
+      return acc;
+    }, {});
+
+    const totalPoints = achievements.reduce((sum, a) => sum + (parseInt(a.points_awarded) || 0), 0);
+
+    res.json(formatResponse({
+      achievements,
+      grouped,
+      total_count: achievements.length,
+      total_points: totalPoints
+    }));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get student certificates
  */
 const getStudentCertificates = async (req, res, next) => {
@@ -211,13 +271,16 @@ const getStudentCertificates = async (req, res, next) => {
 
     const certificates = await sequelize.query(
       `SELECT 
-        id,
-        certificate_name,
-        certificate_url,
-        issued_at
-       FROM certificates
-       WHERE student_id = :studentId
-       ORDER BY issued_at DESC`,
+        c.id,
+        c.course_id,
+        co.title as course_title,
+        c.certificate_url,
+        c.issued_date as issued_at,
+        c.is_valid
+       FROM certificates c
+       JOIN courses co ON c.course_id = co.id
+       WHERE c.student_id = :studentId AND c.is_valid = true
+       ORDER BY c.issued_date DESC`,
       {
         replacements: { studentId },
         type: sequelize.QueryTypes.SELECT
@@ -230,10 +293,25 @@ const getStudentCertificates = async (req, res, next) => {
   }
 };
 
+/**
+ * Get top students by score
+ */
+const getTopStudentsEndpoint = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const students = await getTopStudents(limit);
+    res.json(formatResponse(students));
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudentProfile,
   getStudentScoreEndpoint,
+  getStudentAchievements,
   getStudentCourses,
-  getStudentCertificates
+  getStudentCertificates,
+  getTopStudentsEndpoint
 };
 

@@ -1,83 +1,116 @@
-const { StudentScore, sequelize } = require('../models');
-const { calculateTemporaryScore } = require('../utils/helpers');
+const { sequelize } = require('../models');
 
 /**
- * Get or calculate student score
+ * Get student score from LMS student_scores table
  */
 const getStudentScore = async (studentId) => {
   try {
-    // First, try to get from student_scores table
-    let studentScore = await StudentScore.findOne({
-      where: { student_id: studentId }
-    });
-
-    // If score exists and is recent (within 24 hours), return it
-    if (studentScore && studentScore.last_calculated_at) {
-      const hoursSinceCalculation = (new Date() - new Date(studentScore.last_calculated_at)) / (1000 * 60 * 60);
-      if (hoursSinceCalculation < 24) {
-        return {
-          overall_score: parseFloat(studentScore.overall_score) || 0,
-          course_average: parseFloat(studentScore.course_average) || 0,
-          test_average: parseFloat(studentScore.test_average) || 0,
-          project_average: parseFloat(studentScore.project_average) || 0,
-          hackathon_average: parseFloat(studentScore.hackathon_average) || 0,
-          last_calculated_at: studentScore.last_calculated_at,
-          is_temporary: false
-        };
+    // Query the LMS student_scores table directly
+    const scores = await sequelize.query(
+      `SELECT 
+        student_id,
+        total_points,
+        total_course_points,
+        total_project_points,
+        total_hackathon_points,
+        courses_completed_count,
+        projects_approved_count,
+        hackathons_approved_count,
+        master_certificate_issued,
+        master_certificate_issued_at,
+        last_calculated_at
+       FROM student_scores
+       WHERE student_id = :studentId`,
+      {
+        replacements: { studentId },
+        type: sequelize.QueryTypes.SELECT
       }
+    );
+
+    if (scores && scores.length > 0) {
+      const score = scores[0];
+      return {
+        total_points: parseInt(score.total_points) || 0,
+        total_course_points: parseInt(score.total_course_points) || 0,
+        total_project_points: parseInt(score.total_project_points) || 0,
+        total_hackathon_points: parseInt(score.total_hackathon_points) || 0,
+        courses_completed_count: parseInt(score.courses_completed_count) || 0,
+        projects_approved_count: parseInt(score.projects_approved_count) || 0,
+        hackathons_approved_count: parseInt(score.hackathons_approved_count) || 0,
+        master_certificate_issued: score.master_certificate_issued || false,
+        master_certificate_issued_at: score.master_certificate_issued_at,
+        last_calculated_at: score.last_calculated_at
+      };
     }
 
-    // Calculate temporary score from LMS data
-    const tempScore = await calculateTemporaryScore(studentId, sequelize);
-
-    // Save to database (upsert)
-    await StudentScore.upsert({
-      student_id: studentId,
-      overall_score: tempScore.overall_score,
-      course_average: tempScore.course_average,
-      test_average: tempScore.test_average,
-      project_average: tempScore.project_average || 0,
-      hackathon_average: tempScore.hackathon_average,
-      last_calculated_at: new Date()
-    });
-
-    return tempScore;
+    // Return default if no score exists
+    return {
+      total_points: 0,
+      total_course_points: 0,
+      total_project_points: 0,
+      total_hackathon_points: 0,
+      courses_completed_count: 0,
+      projects_approved_count: 0,
+      hackathons_approved_count: 0,
+      master_certificate_issued: false,
+      master_certificate_issued_at: null,
+      last_calculated_at: null
+    };
   } catch (error) {
     console.error('Error getting student score:', error);
-    // Return default score if calculation fails
     return {
-      overall_score: 0,
-      course_average: 0,
-      test_average: 0,
-      project_average: 0,
-      hackathon_average: 0,
-      is_temporary: true,
-      error: 'Unable to calculate score'
+      total_points: 0,
+      total_course_points: 0,
+      total_project_points: 0,
+      total_hackathon_points: 0,
+      courses_completed_count: 0,
+      projects_approved_count: 0,
+      hackathons_approved_count: 0,
+      master_certificate_issued: false,
+      error: 'Unable to fetch score'
     };
   }
 };
 
 /**
- * Update student score (for when official scoring system is implemented)
+ * Get top students by score
  */
-const updateStudentScore = async (studentId, scoreData) => {
-  const [studentScore] = await StudentScore.upsert({
-    student_id: studentId,
-    overall_score: scoreData.overall_score,
-    course_average: scoreData.course_average,
-    test_average: scoreData.test_average,
-    project_average: scoreData.project_average,
-    hackathon_average: scoreData.hackathon_average,
-    last_calculated_at: new Date()
-  }, {
-    returning: true
-  });
+const getTopStudents = async (limit = 10) => {
+  try {
+    const students = await sequelize.query(
+      `SELECT 
+        ss.student_id,
+        u.name as student_name,
+        u.email,
+        u.avatar,
+        ss.total_points,
+        ss.total_course_points,
+        ss.total_project_points,
+        ss.total_hackathon_points,
+        ss.courses_completed_count,
+        ss.projects_approved_count,
+        ss.hackathons_approved_count,
+        ss.master_certificate_issued
+       FROM student_scores ss
+       JOIN users u ON ss.student_id = u.id
+       WHERE u.role = 'student'
+       ORDER BY ss.total_points DESC
+       LIMIT :limit`,
+      {
+        replacements: { limit: parseInt(limit) },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
 
-  return studentScore;
+    return students;
+  } catch (error) {
+    console.error('Error getting top students:', error);
+    return [];
+  }
 };
 
 module.exports = {
   getStudentScore,
-  updateStudentScore
+  getTopStudents
 };
 

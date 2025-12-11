@@ -25,14 +25,14 @@ const StudentDashboard = () => {
     queryFn: () => jobService.getAllJobs({ limit: 6 })
   });
 
-  const score = scoreData?.data?.overall_score || 0;
+  const score = scoreData?.data?.total_points || 0;
   const applications = applicationsData?.data?.data || [];
   const jobs = jobsData?.data?.data || [];
 
   const stats = [
     {
-      label: 'Current Score',
-      value: score.toFixed(1),
+      label: 'Total Points',
+      value: score,
       icon: CheckCircle,
       color: 'text-success'
     },
@@ -76,15 +76,43 @@ const StudentDashboard = () => {
             {/* Score Display */}
             <div className="card mb-8">
               <h2 className="text-xl font-semibold mb-4">Your Academic Score</h2>
-              <div className="flex items-center gap-6">
-                <div className="text-6xl font-bold text-primary">{score.toFixed(1)}</div>
-                <div>
-                  <p className="text-gray-600">Out of 100</p>
-                  {scoreData?.data?.is_temporary && (
-                    <p className="text-sm text-warning mt-1">Temporary Score</p>
-                  )}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Total Points</p>
+                  <p className="text-4xl font-bold text-blue-600">{scoreData?.data?.total_points || 0}</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Course Points</p>
+                  <p className="text-3xl font-bold text-green-600">{scoreData?.data?.total_course_points || 0}</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Project Points</p>
+                  <p className="text-3xl font-bold text-purple-600">{scoreData?.data?.total_project_points || 0}</p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
+                  <p className="text-3xl font-bold text-orange-600">{scoreData?.data?.total_hackathon_points || 0}</p>
                 </div>
               </div>
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-sm text-gray-600">Courses Completed</p>
+                  <p className="text-xl font-bold">{scoreData?.data?.courses_completed_count || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Projects Approved</p>
+                  <p className="text-xl font-bold">{scoreData?.data?.projects_approved_count || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Hackathons</p>
+                  <p className="text-xl font-bold">{scoreData?.data?.hackathons_approved_count || 0}</p>
+                </div>
+              </div>
+              {scoreData?.data?.master_certificate_issued && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="font-semibold text-yellow-800">🎓 Master Certificate Issued</p>
+                </div>
+              )}
             </div>
 
             {/* Stats */}
@@ -164,4 +192,5 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+
 

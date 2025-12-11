@@ -19,6 +19,12 @@ export const studentService = {
     return response.data;
   },
 
+  getAchievements: async (id = null) => {
+    const endpoint = id ? `/students/${id}/achievements` : '/students/achievements';
+    const response = await api.get(endpoint);
+    return response.data;
+  },
+
   getCertificates: async (id = null) => {
     const endpoint = id ? `/students/${id}/certificates` : '/students/certificates';
     const response = await api.get(endpoint);
