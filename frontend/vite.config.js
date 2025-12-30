@@ -27,6 +27,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 6000,
+      allowedHosts: [
+        'dakshath.gnanamai.com'
+      ],
       proxy: {
         '/api': {
           target: getProxyTarget(API_URL),
