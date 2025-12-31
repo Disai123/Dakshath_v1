@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: 6000,
+      port: 5173,
       allowedHosts: [
         'dakshath.gnanamai.com'
       ],
