@@ -44,6 +44,92 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    // Personal Information
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    date_of_birth: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    gender: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    city: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    state: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    country: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    pincode: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    // Education
+    current_education: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    institution: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    graduation_year: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    cgpa: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: true
+    },
+    // Professional
+    skills: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    linkedin_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    github_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    portfolio_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    // Documents
+    resume_url: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    // Profile completion
+    profile_completed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    profile_completed_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -65,7 +151,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   // Instance method to compare password
-  User.prototype.comparePassword = async function(candidatePassword) {
+  User.prototype.comparePassword = async function (candidatePassword) {
     if (!this.password) {
       return false;
     }
@@ -74,7 +160,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   // Instance method to get public profile
-  User.prototype.toJSON = function() {
+  User.prototype.toJSON = function () {
     const values = Object.assign({}, this.get());
     delete values.password;
     return values;

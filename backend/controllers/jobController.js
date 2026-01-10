@@ -14,7 +14,11 @@ const getAllJobs = async (req, res, next) => {
     const { search, job_type, location, min_score, max_score } = req.query;
 
     const where = {
-      status: 'active'
+      status: 'active',
+      [Op.or]: [
+        { application_deadline: null },
+        { application_deadline: { [Op.gte]: new Date() } }
+      ]
     };
 
     // Search filter
@@ -61,7 +65,10 @@ const getAllJobs = async (req, res, next) => {
     let jobs = rows;
     if (req.user && req.user.role === 'student') {
       const scoreData = await getStudentScore(req.user.id);
-      const studentScore = scoreData.overall_score || 0;
+      console.log('getAllJobs - Student ID:', req.user.id);
+      console.log('getAllJobs - Score Data:', scoreData);
+      const studentScore = scoreData.total_points || 0;
+      console.log('getAllJobs - Student Score:', studentScore);
 
       jobs = rows.map(job => {
         const jobData = job.toJSON();
@@ -110,13 +117,17 @@ const getJobById = async (req, res, next) => {
 
     const jobData = job.toJSON();
 
+    // Add expiration status
+    const isExpired = job.application_deadline && new Date(job.application_deadline) < new Date();
+    jobData.is_expired = isExpired;
+
     // Add qualification status if student is logged in
     if (req.user && req.user.role === 'student') {
       const qualification = await checkJobQualification(req.user.id, job.id);
       const scoreData = await getStudentScore(req.user.id);
-      const studentScore = parseFloat(scoreData.overall_score) || 0;
+      const studentScore = parseFloat(scoreData.total_points) || 0;
       const requiredScore = parseFloat(job.required_score_min) || 0;
-      
+
       // Student qualifies if score >= required (including 0 >= 0)
       const qualified = studentScore >= requiredScore;
       jobData.qualification_status = qualified ? 'qualified' : 'not_qualified';
@@ -139,7 +150,11 @@ const searchJobs = async (req, res, next) => {
     const { q, job_type, location, min_score, max_score, company_id } = req.query;
 
     const where = {
-      status: 'active'
+      status: 'active',
+      [Op.or]: [
+        { application_deadline: null },
+        { application_deadline: { [Op.gte]: new Date() } }
+      ]
     };
 
     if (q) {
@@ -186,7 +201,7 @@ const searchJobs = async (req, res, next) => {
     let jobs = rows;
     if (req.user && req.user.role === 'student') {
       const scoreData = await getStudentScore(req.user.id);
-      const studentScore = scoreData.overall_score || 0;
+      const studentScore = scoreData.total_points || 0;
 
       jobs = rows.map(job => {
         const jobData = job.toJSON();
@@ -262,6 +277,14 @@ const createJob = async (req, res, next) => {
       throw new AuthorizationError('Company must be active to post jobs');
     }
 
+    // Validate application deadline if provided
+    if (req.body.application_deadline) {
+      const deadline = new Date(req.body.application_deadline);
+      if (deadline < new Date()) {
+        throw new ValidationError('Application deadline must be in the future');
+      }
+    }
+
     const jobData = {
       ...req.body,
       company_id: req.user.company_id,
@@ -299,6 +322,14 @@ const updateJob = async (req, res, next) => {
     // Check authorization
     if (req.user.role !== 'admin' && job.company_id !== req.user.company_id) {
       throw new AuthorizationError('Not authorized to update this job');
+    }
+
+    // Validate application deadline if provided
+    if (req.body.application_deadline) {
+      const deadline = new Date(req.body.application_deadline);
+      if (deadline < new Date()) {
+        throw new ValidationError('Application deadline must be in the future');
+      }
     }
 
     await job.update(req.body);
@@ -348,14 +379,14 @@ const deleteJob = async (req, res, next) => {
 const getCompanyJobs = async (req, res, next) => {
   try {
     const logger = require('../utils/logger');
-    
+
     // Log for debugging
     logger.info('getCompanyJobs called', {
       user_id: req.user.id,
       company_id: req.user.company_id,
       hr_user_id: req.user.hr_user_id
     });
-    
+
     if (!req.user.company_id) {
       logger.error('No company_id found for HR user', { user_id: req.user.id });
       return res.status(400).json({
@@ -366,7 +397,7 @@ const getCompanyJobs = async (req, res, next) => {
         }
       });
     }
-    
+
     const { page, limit, offset, getMeta } = paginate(req.query.page, req.query.limit);
     const { status } = req.query;
 
@@ -381,16 +412,20 @@ const getCompanyJobs = async (req, res, next) => {
     // Get jobs without association to avoid potential issues
     const { count, rows } = await JobListing.findAndCountAll({
       where,
-      attributes: ['id', 'title', 'description', 'job_type', 'location', 'status', 'required_score_min', 'required_score_max', 'created_at', 'updated_at', 'company_id'],
+      attributes: ['id', 'title', 'description', 'job_type', 'location', 'status', 'required_score_min', 'required_score_max', 'application_deadline', 'created_at', 'updated_at', 'company_id'],
       order: [['created_at', 'DESC']],
       limit,
       offset
     });
 
-    // Add application count and company name for each job
+    // Add application count, company name, and expiration status for each job
     const jobs = await Promise.all(rows.map(async (job) => {
       const jobData = job.toJSON();
-      
+
+      // Add expiration status
+      const isExpired = job.application_deadline && new Date(job.application_deadline) < new Date();
+      jobData.is_expired = isExpired;
+
       // Get application count
       try {
         const applicationCount = await Application.count({
@@ -400,7 +435,7 @@ const getCompanyJobs = async (req, res, next) => {
       } catch (err) {
         jobData.application_count = 0;
       }
-      
+
       // Get company name if needed
       if (job.company_id) {
         try {
@@ -417,7 +452,7 @@ const getCompanyJobs = async (req, res, next) => {
           // Company not found, continue without it
         }
       }
-      
+
       return jobData;
     }));
 
@@ -426,7 +461,7 @@ const getCompanyJobs = async (req, res, next) => {
       count: count,
       jobs_returned: jobs.length
     });
-    
+
     res.json(formatResponse(jobs, null, getMeta(count)));
   } catch (error) {
     logger.error('getCompanyJobs error', {

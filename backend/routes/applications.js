@@ -12,7 +12,7 @@ router.post(
   authenticate,
   requireStudent,
   [
-    body('job_listing_id').isInt().withMessage('Job listing ID is required')
+    body('job_listing_id').toInt().isInt({ min: 1 }).withMessage('Valid job listing ID is required')
   ],
   validate,
   applicationController.applyToJob

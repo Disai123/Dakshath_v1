@@ -16,7 +16,19 @@ const getStudentProfile = async (req, res, next) => {
     }
 
     const user = await User.findByPk(studentId, {
-      attributes: ['id', 'name', 'email', 'avatar', 'role', 'created_at']
+      attributes: [
+        'id', 'name', 'email', 'avatar', 'role', 'created_at',
+        // Personal Information
+        'phone', 'date_of_birth', 'gender', 'address', 'city', 'state', 'country', 'pincode',
+        // Education
+        'current_education', 'institution', 'graduation_year', 'cgpa',
+        // Professional
+        'bio', 'skills', 'linkedin_url', 'github_url', 'portfolio_url',
+        // Documents
+        'resume_url',
+        // Profile Status
+        'profile_completed', 'profile_completed_at'
+      ]
     });
 
     if (!user) {
@@ -306,12 +318,207 @@ const getTopStudentsEndpoint = async (req, res, next) => {
   }
 };
 
+/**
+ * Update student profile
+ */
+const updateStudentProfile = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+
+    const user = await User.findByPk(studentId);
+    if (!user) {
+      throw new NotFoundError('Student');
+    }
+
+    // Only allow students to update their own profile
+    if (req.user.role !== 'student') {
+      throw new AuthorizationError('Only students can update their profile');
+    }
+
+    // Allowed fields for update
+    const allowedFields = [
+      'phone', 'date_of_birth', 'gender', 'address', 'city', 'state', 'country', 'pincode',
+      'current_education', 'institution', 'graduation_year', 'cgpa',
+      'skills', 'bio', 'linkedin_url', 'github_url', 'portfolio_url',
+      'resume_url'
+    ];
+
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    // Calculate profile completion
+    const profileFields = {
+      personal: ['phone', 'date_of_birth', 'gender', 'address'],
+      education: ['current_education', 'institution', 'graduation_year', 'cgpa'],
+      professional: ['bio', 'skills', 'linkedin_url'],
+      documents: ['resume_url']
+    };
+
+    let completedFields = 0;
+    let totalFields = 0;
+
+    for (const category in profileFields) {
+      for (const field of profileFields[category]) {
+        totalFields++;
+        const value = updateData[field] !== undefined ? updateData[field] : user[field];
+        if (value && (Array.isArray(value) ? value.length >= 3 : true)) {
+          completedFields++;
+        }
+      }
+    }
+
+    const completionPercentage = (completedFields / totalFields) * 100;
+    updateData.profile_completed = completionPercentage >= 80;
+    if (updateData.profile_completed && !user.profile_completed) {
+      updateData.profile_completed_at = new Date();
+    }
+
+    await user.update(updateData);
+
+    const updatedUser = await User.findByPk(studentId);
+
+    res.json(formatResponse({
+      ...updatedUser.toJSON(),
+      profile_completion_percentage: Math.round(completionPercentage)
+    }, 'Profile updated successfully'));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Download student profile (for HR)
+ */
+const downloadStudentProfile = async (req, res, next) => {
+  try {
+    const studentId = req.params.id;
+
+    // Only HR and Admin can download profiles
+    if (req.user.role !== 'hr' && req.user.role !== 'admin') {
+      throw new AuthorizationError('Not authorized to download profiles');
+    }
+
+    const user = await User.findByPk(studentId, {
+      attributes: [
+        'id', 'name', 'email', 'avatar', 'role', 'created_at',
+        'phone', 'date_of_birth', 'gender', 'address', 'city', 'state', 'country', 'pincode',
+        'current_education', 'institution', 'graduation_year', 'cgpa',
+        'bio', 'skills', 'linkedin_url', 'github_url', 'portfolio_url',
+        'resume_url', 'profile_completed', 'profile_completed_at'
+      ]
+    });
+
+    if (!user || user.role !== 'student') {
+      throw new NotFoundError('Student');
+    }
+
+    // Get student score
+    const scoreData = await getStudentScore(studentId);
+
+    // Get achievements
+    const achievements = await sequelize.query(
+      `SELECT 
+        sa.id,
+        sa.achievement_type,
+        sa.points_awarded,
+        sa.awarded_at,
+        sa.metadata
+       FROM student_achievements sa
+       WHERE sa.student_id = :studentId AND sa.is_active = true
+       ORDER BY sa.awarded_at DESC`,
+      {
+        replacements: { studentId },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    // Get certificates
+    const certificates = await sequelize.query(
+      `SELECT 
+        c.id,
+        co.title as course_title,
+        c.certificate_url,
+        c.issued_date as issued_at
+       FROM certificates c
+       JOIN courses co ON c.course_id = co.id
+       WHERE c.student_id = :studentId AND c.is_valid = true
+       ORDER BY c.issued_date DESC`,
+      {
+        replacements: { studentId },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    const profile = {
+      personal_information: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        date_of_birth: user.date_of_birth,
+        gender: user.gender,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        country: user.country,
+        pincode: user.pincode
+      },
+      education: {
+        current_education: user.current_education,
+        institution: user.institution,
+        graduation_year: user.graduation_year,
+        cgpa: user.cgpa
+      },
+      professional: {
+        bio: user.bio,
+        skills: user.skills || [],
+        linkedin_url: user.linkedin_url,
+        github_url: user.github_url,
+        portfolio_url: user.portfolio_url
+      },
+      documents: {
+        resume_url: user.resume_url,
+        avatar: user.avatar
+      },
+      academic_performance: {
+        score: scoreData,
+        achievements: achievements,
+        certificates: certificates
+      },
+      profile_status: {
+        profile_completed: user.profile_completed,
+        profile_completed_at: user.profile_completed_at,
+        created_at: user.created_at
+      }
+    };
+
+    // Generate PDF
+    const { generateStudentProfilePDF } = require('../utils/pdfGenerator');
+    const pdfBuffer = await generateStudentProfilePDF(profile);
+
+    // Set response headers for PDF download
+    const fileName = `${user.name.replace(/\s+/g, '_')}_Profile_${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudentProfile,
   getStudentScoreEndpoint,
   getStudentAchievements,
   getStudentCourses,
   getStudentCertificates,
-  getTopStudentsEndpoint
+  getTopStudentsEndpoint,
+  updateStudentProfile,
+  downloadStudentProfile
 };
 

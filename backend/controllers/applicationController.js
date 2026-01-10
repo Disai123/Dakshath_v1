@@ -39,7 +39,7 @@ const applyToJob = async (req, res, next) => {
 
     // Get student score and validate
     const scoreData = await getStudentScore(req.user.id);
-    const studentScore = parseFloat(scoreData.overall_score) || 0;
+    const studentScore = parseFloat(scoreData.total_points) || 0;
     const requiredScore = parseFloat(job.required_score_min) || 0;
 
     // Student qualifies if score >= required (including 0 >= 0)
@@ -93,6 +93,9 @@ const applyToJob = async (req, res, next) => {
 
     res.status(201).json(formatResponse(createdApplication, 'Application submitted successfully'));
   } catch (error) {
+    console.error('Error in applyToJob:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     next(error);
   }
 };

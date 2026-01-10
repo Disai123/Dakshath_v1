@@ -145,7 +145,7 @@ const registerCompany = async (req, res, next) => {
     } catch (transactionError) {
       // Rollback transaction on any error
       await transaction.rollback();
-      
+
       // If it's a Sequelize unique constraint error, provide a more specific message
       if (transactionError.name === 'SequelizeUniqueConstraintError') {
         const field = transactionError.errors?.[0]?.path || 'field';
@@ -232,7 +232,14 @@ const updateCompanyProfile = async (req, res, next) => {
     }
 
     // Only allow updating certain fields
-    const allowedFields = ['description', 'website', 'logo_url', 'phone', 'location', 'industry'];
+    const allowedFields = [
+      'description', 'website', 'logo_url', 'phone', 'location', 'industry',
+      // New comprehensive fields
+      'company_size', 'founded_year', 'company_type', 'headquarters',
+      'linkedin_url', 'twitter_url', 'specialties', 'company_culture',
+      'benefits', 'tech_stack', 'cover_image_url', 'gallery_images',
+      'mission_statement', 'vision_statement', 'values', 'certifications'
+    ];
     const updateData = {};
 
     for (const field of allowedFields) {

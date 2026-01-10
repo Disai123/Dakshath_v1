@@ -21,13 +21,17 @@ const StudentDashboard = () => {
   });
 
   const { data: jobsData, isLoading: jobsLoading } = useQuery({
-    queryKey: ['recentJobs'],
-    queryFn: () => jobService.getAllJobs({ limit: 6 })
+    queryKey: ['qualifiedJobs'],
+    queryFn: () => jobService.getQualifiedJobs({ limit: 6 })
   });
 
   const score = scoreData?.data?.total_points || 0;
-  const applications = applicationsData?.data?.data || [];
-  const jobs = jobsData?.data?.data || [];
+  const applications = applicationsData?.data || [];
+  const jobs = jobsData?.data || [];
+
+  // Get total counts from metadata
+  const totalApplications = applicationsData?.meta?.total || applications.length;
+  const totalQualifiedJobs = jobsData?.meta?.total || jobs.length;
 
   const stats = [
     {
@@ -38,13 +42,13 @@ const StudentDashboard = () => {
     },
     {
       label: 'Total Applications',
-      value: applications.length,
+      value: totalApplications,
       icon: FileText,
       color: 'text-primary'
     },
     {
       label: 'Available Jobs',
-      value: jobs.length,
+      value: totalQualifiedJobs,
       icon: Briefcase,
       color: 'text-warning'
     }

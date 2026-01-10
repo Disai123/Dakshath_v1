@@ -19,7 +19,7 @@ const LoginPage = () => {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     const registeredParam = searchParams.get('registered');
-    
+
     if (errorParam) {
       const errorMessages = {
         auth_failed: 'Authentication failed. Please try again.',
@@ -29,7 +29,7 @@ const LoginPage = () => {
       };
       setError(errorMessages[errorParam] || 'An error occurred. Please try again.');
     }
-    
+
     if (registeredParam === 'true') {
       setError('Company registration successful! Your account is pending admin approval. You will receive an email once approved.');
     }
@@ -148,11 +148,10 @@ const LoginPage = () => {
                 setEmail('');
                 setPassword('');
               }}
-              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                loginType === 'student'
+              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${loginType === 'student'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               Student
             </button>
@@ -163,29 +162,14 @@ const LoginPage = () => {
                 setEmail('');
                 setPassword('');
               }}
-              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                loginType === 'hr'
+              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${loginType === 'hr'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               HR
             </button>
-            <button
-              onClick={() => {
-                setLoginType('admin');
-                setError('');
-                setEmail('');
-                setPassword('');
-              }}
-              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                loginType === 'admin'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Admin
-            </button>
+            {/* Admin tab hidden - admin can still login by typing admin credentials */}
           </div>
 
           {/* Error Message */}

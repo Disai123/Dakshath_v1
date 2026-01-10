@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import { applicationService } from '../../services/applicationService';
@@ -7,7 +8,7 @@ import { hrRequestService } from '../../services/hrRequestService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDate } from '../../utils/helpers';
 import { STATUS_LABELS, STATUS_COLORS } from '../../utils/constants';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare, X, User } from 'lucide-react';
 
 const HRApplicationsPage = () => {
   const queryClient = useQueryClient();
@@ -45,7 +46,7 @@ const HRApplicationsPage = () => {
     onError: (error) => {
       const errorMessage = error?.response?.data?.error?.message || 'Failed to create request';
       const errorDetails = error?.response?.data?.error?.details;
-      
+
       if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
         const detailsMessage = errorDetails.map(d => `${d.field}: ${d.message}`).join('\n');
         alert(`${errorMessage}\n\nDetails:\n${detailsMessage}`);
@@ -56,7 +57,7 @@ const HRApplicationsPage = () => {
   });
 
   const applications = data?.data || [];
-  
+
   const handleCreateRequest = (application) => {
     setSelectedApplication(application);
     setShowRequestModal(true);
@@ -134,13 +135,22 @@ const HRApplicationsPage = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <button
-                                onClick={() => handleCreateRequest(app)}
-                                className="btn-primary text-sm inline-flex items-center gap-2"
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                                Request Action
-                              </button>
+                              <div className="flex gap-2">
+                                <Link
+                                  to={`/hr/students/${app.student_id}`}
+                                  className="btn-secondary text-sm inline-flex items-center gap-2"
+                                >
+                                  <User className="w-4 h-4" />
+                                  View Profile
+                                </Link>
+                                <button
+                                  onClick={() => handleCreateRequest(app)}
+                                  className="btn-primary text-sm inline-flex items-center gap-2"
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                  Request Action
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

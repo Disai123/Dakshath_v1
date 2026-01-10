@@ -14,13 +14,16 @@ import ApplicationsPage from './pages/student/ApplicationsPage';
 import ProfilePage from './pages/student/ProfilePage';
 import HRDashboard from './pages/hr/HRDashboard';
 import CreateJobPage from './pages/hr/CreateJobPage';
+import EditJobPage from './pages/hr/EditJobPage';
 import JobManagementPage from './pages/hr/JobManagementPage';
 import HRApplicationsPage from './pages/hr/HRApplicationsPage';
 import CompanyProfilePage from './pages/hr/CompanyProfilePage';
+import StudentProfileView from './pages/hr/StudentProfileView';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CompanyApprovalPage from './pages/admin/CompanyApprovalPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import HRRequestsPage from './pages/admin/HRRequestsPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import NotificationsPage from './pages/common/NotificationsPage';
 import NotFoundPage from './pages/common/NotFoundPage';
 
@@ -66,11 +69,11 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register/company" element={<CompanyRegistrationPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
-      
+
       {/* Public Job Routes */}
       <Route path="/jobs" element={<JobSearchPage />} />
       <Route path="/jobs/:id" element={<JobDetailPage />} />
-      
+
       {/* Notifications (Protected) */}
       <Route
         path="/notifications"
@@ -125,6 +128,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/hr/jobs/edit/:id"
+        element={
+          <PrivateRoute allowedRoles={['hr']}>
+            <EditJobPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/hr/jobs"
         element={
           <PrivateRoute allowedRoles={['hr']}>
@@ -145,6 +156,14 @@ function AppRoutes() {
         element={
           <PrivateRoute allowedRoles={['hr']}>
             <CompanyProfilePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/hr/students/:id"
+        element={
+          <PrivateRoute allowedRoles={['hr']}>
+            <StudentProfileView />
           </PrivateRoute>
         }
       />
@@ -179,6 +198,14 @@ function AppRoutes() {
         element={
           <PrivateRoute allowedRoles={['admin']}>
             <HRRequestsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <PrivateRoute allowedRoles={['admin']}>
+            <AdminSettingsPage />
           </PrivateRoute>
         }
       />

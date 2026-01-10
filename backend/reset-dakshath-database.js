@@ -18,7 +18,6 @@ const bcrypt = require('bcryptjs');
 const DAKSHATH_TABLES = [
   'job_categories',
   'notifications',
-  'student_scores',
   'application_status_history',
   'applications',
   'job_listings',
@@ -28,11 +27,11 @@ const DAKSHATH_TABLES = [
 
 async function dropDakshathTables() {
   console.log('\n🗑️  Dropping Dakshath tables...');
-  
+
   try {
     // Disable foreign key checks temporarily
     await sequelize.query('SET session_replication_role = replica;');
-    
+
     for (const table of DAKSHATH_TABLES) {
       try {
         await sequelize.query(`DROP TABLE IF EXISTS "${table}" CASCADE;`);
@@ -43,10 +42,10 @@ async function dropDakshathTables() {
         }
       }
     }
-    
+
     // Re-enable foreign key checks
     await sequelize.query('SET session_replication_role = DEFAULT;');
-    
+
     // Clear SequelizeMeta entries for Dakshath migrations (001-009)
     try {
       await sequelize.query(`
@@ -56,7 +55,6 @@ async function dropDakshathTables() {
            OR "name" LIKE '003-%' 
            OR "name" LIKE '004-%' 
            OR "name" LIKE '005-%' 
-           OR "name" LIKE '006-%' 
            OR "name" LIKE '007-%' 
            OR "name" LIKE '008-%' 
            OR "name" LIKE '009-%';
@@ -66,7 +64,7 @@ async function dropDakshathTables() {
       // SequelizeMeta table might not exist yet, that's okay
       console.log('   ℹ️  Migration history will be reset when migrations run');
     }
-    
+
     console.log('   ✅ All Dakshath tables dropped\n');
   } catch (error) {
     console.error('   ❌ Error dropping tables:', error.message);
@@ -76,9 +74,9 @@ async function dropDakshathTables() {
 
 async function runMigrations() {
   console.log('📦 Running migrations...');
-  
+
   const { execSync } = require('child_process');
-  
+
   try {
     // Run migrations
     execSync('npx sequelize-cli db:migrate', {
@@ -86,7 +84,7 @@ async function runMigrations() {
       stdio: 'inherit',
       env: process.env
     });
-    
+
     console.log('   ✅ Migrations completed\n');
   } catch (error) {
     console.error('   ❌ Migration error:', error.message);
@@ -96,7 +94,7 @@ async function runMigrations() {
 
 async function seedDefaultData() {
   console.log('🌱 Seeding default data...\n');
-  
+
   try {
     // 0. Ensure enum values exist (student, hr, admin)
     console.log('   0. Checking/Updating role enum values...');
@@ -111,10 +109,10 @@ async function seedDefaultData() {
         )
         ORDER BY enumsortorder;
       `);
-      
+
       const enumValues = enumCheck.map(row => row.enumlabel);
       console.log('      Current enum values:', enumValues.join(', '));
-      
+
       // Add 'student' to enum if it doesn't exist
       if (!enumValues.includes('student')) {
         try {
@@ -130,7 +128,7 @@ async function seedDefaultData() {
       } else {
         console.log('      ℹ️  "student" already exists in role enum');
       }
-      
+
       // Add 'hr' to enum if it doesn't exist
       if (!enumValues.includes('hr')) {
         try {
@@ -150,11 +148,11 @@ async function seedDefaultData() {
       console.log('      ⚠️  Role enum check error:', err.message);
       // Continue anyway - might work if enum already has the values
     }
-    
+
     // 1. Ensure admin user exists (shared with LMS)
     console.log('\n   1. Checking/Creating admin user...');
     let adminUser = await User.findOne({ where: { email: 'admin@lms.com' } });
-    
+
     if (!adminUser) {
       const hashedPassword = await bcrypt.hash('admin123', 12);
       adminUser = await User.create({
@@ -166,17 +164,15 @@ async function seedDefaultData() {
       });
       console.log('      ✅ Admin user created');
     } else {
-      // Ensure admin has password
-      if (!adminUser.password) {
-        const hashedPassword = await bcrypt.hash('admin123', 12);
-        await adminUser.update({ password: hashedPassword });
-      }
-      console.log('      ✅ Admin user exists');
+      // Force update admin password
+      const hashedPassword = await bcrypt.hash('admin123', 12);
+      await adminUser.update({ password: hashedPassword });
+      console.log('      ✅ Admin user password updated');
     }
-    
+
     // 1.5. Create default students (shared with LMS)
     console.log('\n   1.5. Creating default students...');
-    
+
     const defaultStudents = [
       {
         name: 'Rajesh Kumar',
@@ -227,10 +223,10 @@ async function seedDefaultData() {
         role: 'student'
       }
     ];
-    
+
     for (const studentData of defaultStudents) {
       const existingStudent = await User.findOne({ where: { email: studentData.email } });
-      
+
       if (!existingStudent) {
         const hashedPassword = await bcrypt.hash(studentData.password, 12);
         await User.create({
@@ -242,18 +238,16 @@ async function seedDefaultData() {
         });
         console.log(`      ✅ Created student: ${studentData.name} (${studentData.email})`);
       } else {
-        // Ensure student has password
-        if (!existingStudent.password) {
-          const hashedPassword = await bcrypt.hash(studentData.password, 12);
-          await existingStudent.update({ password: hashedPassword });
-        }
-        console.log(`      ℹ️  Student exists: ${studentData.name}`);
+        // Force update password to ensure it's hashed
+        const hashedPassword = await bcrypt.hash(studentData.password, 12);
+        await existingStudent.update({ password: hashedPassword });
+        console.log(`      ✅ Updated password for student: ${studentData.name}`);
       }
     }
-    
+
     // 2. Create sample companies
     console.log('\n   2. Creating sample companies...');
-    
+
     const companies = [
       {
         company_name: 'TechCorp Solutions',
@@ -290,7 +284,7 @@ async function seedDefaultData() {
         status: 'pending'
       }
     ];
-    
+
     const createdCompanies = [];
     for (const companyData of companies) {
       const [company, created] = await Company.findOrCreate({
@@ -300,14 +294,13 @@ async function seedDefaultData() {
       createdCompanies.push(company);
       console.log(`      ${created ? '✅ Created' : 'ℹ️  Exists'}: ${company.company_name}`);
     }
-    
     // 3. Create HR users for active companies
     console.log('\n   3. Creating HR users for companies...');
-    
+
     for (const company of createdCompanies.filter(c => c.status === 'active')) {
       const hrEmail = company.email;
       let hrUser = await User.findOne({ where: { email: hrEmail } });
-      
+
       if (!hrUser) {
         const hashedPassword = await bcrypt.hash('hr123456', 12);
         hrUser = await User.create({
@@ -317,22 +310,25 @@ async function seedDefaultData() {
           role: 'hr',
           is_active: true
         });
-        
+
         await HRUser.create({
           user_id: hrUser.id,
           company_id: company.id,
           is_active: true
         });
-        
+
         console.log(`      ✅ Created HR user: ${hrEmail} (password: hr123456)`);
       } else {
-        console.log(`      ℹ️  HR user exists: ${hrEmail}`);
+        // Force update password
+        const hashedPassword = await bcrypt.hash('hr123456', 12);
+        await hrUser.update({ password: hashedPassword });
+        console.log(`      ✅ Updated password for HR user: ${hrEmail}`);
       }
     }
-    
+
     // 4. Create job categories
     console.log('\n   4. Creating job categories...');
-    
+
     const categories = [
       { name: 'Software Development', description: 'Software engineering and development roles' },
       { name: 'Data Science', description: 'Data analysis, machine learning, and AI roles' },
@@ -344,7 +340,7 @@ async function seedDefaultData() {
       { name: 'Product Management', description: 'Product strategy and management' },
       { name: 'Internship', description: 'Internship opportunities for students' }
     ];
-    
+
     for (const category of categories) {
       const [cat, created] = await JobCategory.findOrCreate({
         where: { name: category.name },
@@ -352,19 +348,19 @@ async function seedDefaultData() {
       });
       console.log(`      ${created ? '✅ Created' : 'ℹ️  Exists'}: ${category.name}`);
     }
-    
+
     // 5. Create sample job listings (for active companies)
     console.log('\n   5. Creating sample job listings...');
-    
+
     const activeCompanies = createdCompanies.filter(c => c.status === 'active');
     if (activeCompanies.length > 0) {
       const hrUsers = await HRUser.findAll({
         where: { company_id: activeCompanies[0].id, is_active: true },
         include: [{ association: 'user' }]
       });
-      
+
       if (hrUsers.length > 0) {
-            const jobs = [
+        const jobs = [
           {
             company_id: activeCompanies[0].id,
             posted_by: hrUsers[0].id,
@@ -386,7 +382,7 @@ async function seedDefaultData() {
             status: 'active'
           }
         ];
-        
+
         for (const jobData of jobs) {
           const [job, created] = await JobListing.findOrCreate({
             where: {
@@ -399,9 +395,9 @@ async function seedDefaultData() {
         }
       }
     }
-    
+
     console.log('\n✅ Seeding completed successfully!\n');
-    
+
     // Print summary
     console.log('📊 Summary:');
     console.log('   - Admin User: admin@lms.com / admin123');
@@ -410,7 +406,7 @@ async function seedDefaultData() {
     console.log('   - Companies: ' + createdCompanies.length);
     console.log('   - Job Categories: ' + categories.length);
     console.log('   - Sample Jobs: Created for active companies\n');
-    
+
   } catch (error) {
     console.error('   ❌ Seeding error:', error.message);
     throw error;
@@ -422,20 +418,20 @@ async function resetDatabase() {
     console.log('🚀 Starting Dakshath Database Reset...\n');
     console.log('⚠️  WARNING: This will delete all Dakshath data!');
     console.log('   (LMS tables like "users" will be preserved)\n');
-    
+
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established\n');
-    
+
     // Step 1: Drop tables
     await dropDakshathTables();
-    
+
     // Step 2: Run migrations
     await runMigrations();
-    
+
     // Step 3: Seed data
     await seedDefaultData();
-    
+
     console.log('🎉 Database reset completed successfully!');
     console.log('\nYou can now:');
     console.log('   - Login as admin: admin@lms.com / admin123');
@@ -451,7 +447,7 @@ async function resetDatabase() {
     console.log('   - ananya.desai@student.com / student123');
     console.log('   - rohit.mehta@student.com / student123');
     console.log('   - kavya.nair@student.com / student123\n');
-    
+
     await sequelize.close();
     process.exit(0);
   } catch (error) {

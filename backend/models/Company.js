@@ -44,6 +44,77 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(255),
       allowNull: true
     },
+    // New comprehensive fields
+    company_size: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    founded_year: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    company_type: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    headquarters: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    linkedin_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    twitter_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    specialties: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    company_culture: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    benefits: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    tech_stack: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    cover_image_url: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    gallery_images: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    mission_statement: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    vision_statement: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    values: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
+    certifications: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+      defaultValue: []
+    },
     status: {
       type: DataTypes.ENUM('pending', 'active', 'suspended', 'rejected'),
       defaultValue: 'pending'

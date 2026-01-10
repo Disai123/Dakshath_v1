@@ -86,9 +86,9 @@ const JobSearchPage = () => {
                 {jobs.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {jobs.map((job) => {
-                      const qualification = job.qualification_status
-                        ? getQualificationStatus(job.student_score, job.required_score_min)
-                        : null;
+                      // Use backend-provided qualification status
+                      const isQualified = job.qualification_status === 'qualified';
+                      const hasQualificationInfo = job.qualification_status !== undefined;
 
                       return (
                         <Link
@@ -101,16 +101,19 @@ const JobSearchPage = () => {
                               <h3 className="font-semibold text-lg mb-1">{job.title}</h3>
                               <p className="text-sm text-gray-600">{job.company?.company_name || 'Company Name'}</p>
                             </div>
-                            {qualification && (
-                              <span className={`badge badge-${qualification.color}`}>
-                                {qualification.status === 'qualified' ? 'Qualified' : 'Not Qualified'}
+                            {hasQualificationInfo && (
+                              <span className={`badge badge-${isQualified ? 'success' : 'error'}`}>
+                                {isQualified ? 'Qualified' : 'Not Qualified'}
                               </span>
                             )}
                           </div>
                           <div className="space-y-2 text-sm text-gray-600">
                             <p>📍 {job.location || 'Remote'}</p>
                             <p>💼 {job.job_type}</p>
-                            <p>📊 Min Score: {formatScore(job.required_score_min)}</p>
+                            <p>📊 Min Points: {formatScore(job.required_score_min)}</p>
+                            {hasQualificationInfo && job.student_score !== undefined && (
+                              <p>✨ Your Points: {formatScore(job.student_score)}</p>
+                            )}
                           </div>
                         </Link>
                       );
@@ -125,8 +128,8 @@ const JobSearchPage = () => {
             )}
           </div>
         </main>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

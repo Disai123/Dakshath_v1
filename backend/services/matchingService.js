@@ -1,4 +1,5 @@
-const { JobListing, Application, sequelize } = require('../models');
+const { JobListing, Application } = require('../models');
+const { Op } = require('sequelize');
 const { getStudentScore } = require('./scoreService');
 const { validateScoreRequirement } = require('../utils/helpers');
 
@@ -9,13 +10,13 @@ const getQualifiedJobs = async (studentId, filters = {}) => {
   try {
     // Get student score
     const scoreData = await getStudentScore(studentId);
-    const studentScore = scoreData.overall_score || 0;
+    const studentScore = parseFloat(scoreData.total_points) || 0;
 
     // Build where clause
     const where = {
       status: 'active',
       required_score_min: {
-        [sequelize.Op.lte]: studentScore
+        [Op.lte]: studentScore
       }
     };
 
@@ -26,7 +27,7 @@ const getQualifiedJobs = async (studentId, filters = {}) => {
 
     if (filters.location) {
       where.location = {
-        [sequelize.Op.iLike]: `%${filters.location}%`
+        [Op.iLike]: `%${filters.location}%`
       };
     }
 
@@ -58,7 +59,7 @@ const getQualifiedJobs = async (studentId, filters = {}) => {
     return jobs.map(job => {
       const jobData = job.toJSON();
       const qualification = validateScoreRequirement(studentScore, job.required_score_min);
-      
+
       return {
         ...jobData,
         qualification_status: qualification.qualified ? 'qualified' : 'not_qualified',
@@ -83,7 +84,7 @@ const checkJobQualification = async (studentId, jobId) => {
     }
 
     const scoreData = await getStudentScore(studentId);
-    const studentScore = scoreData.overall_score || 0;
+    const studentScore = parseFloat(scoreData.total_points) || 0;
 
     return validateScoreRequirement(studentScore, job.required_score_min);
   } catch (error) {

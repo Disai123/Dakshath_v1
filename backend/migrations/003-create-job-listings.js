@@ -101,6 +101,7 @@ module.exports = {
     await queryInterface.addIndex('job_listings', ['required_score_min']);
     await queryInterface.addIndex('job_listings', ['job_type']);
     await queryInterface.addIndex('job_listings', ['created_at']);
+    await queryInterface.addIndex('job_listings', ['application_deadline']);
     await queryInterface.addIndex('job_listings', ['company_id', 'status']);
   },
 

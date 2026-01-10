@@ -9,6 +9,7 @@ router.get('/top-scores', authenticate, studentController.getTopStudentsEndpoint
 
 // Student routes (own profile)
 router.get('/profile', authenticate, requireStudent, studentController.getStudentProfile);
+router.put('/profile', authenticate, requireStudent, studentController.updateStudentProfile);
 router.get('/score', authenticate, requireStudent, studentController.getStudentScoreEndpoint);
 router.get('/achievements', authenticate, requireStudent, studentController.getStudentAchievements);
 router.get('/courses', authenticate, requireStudent, studentController.getStudentCourses);
@@ -16,6 +17,7 @@ router.get('/certificates', authenticate, requireStudent, studentController.getS
 
 // HR/Admin routes (view student profiles)
 router.get('/:id/profile', authenticate, requireHR, studentController.getStudentProfile);
+router.get('/:id/download', authenticate, requireHR, studentController.downloadStudentProfile);
 router.get('/:id/score', authenticate, requireHR, studentController.getStudentScoreEndpoint);
 router.get('/:id/achievements', authenticate, requireHR, studentController.getStudentAchievements);
 router.get('/:id/courses', authenticate, requireHR, studentController.getStudentCourses);

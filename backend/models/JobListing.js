@@ -125,6 +125,9 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['created_at']
       },
       {
+        fields: ['application_deadline']
+      },
+      {
         fields: ['company_id', 'status']
       }
     ]

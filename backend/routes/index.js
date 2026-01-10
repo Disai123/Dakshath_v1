@@ -10,6 +10,10 @@ const hrRoutes = require('./hr');
 const adminRoutes = require('./admin');
 const notificationRoutes = require('./notifications');
 const hrRequestRoutes = require('./hrRequests');
+const publicRoutes = require('./public');
+
+// Public routes (no authentication)
+router.use('/public', publicRoutes);
 
 // API routes
 router.use('/auth', authRoutes);

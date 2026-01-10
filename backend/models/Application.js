@@ -28,11 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'applied'
     },
     score_at_application: {
-      type: DataTypes.DECIMAL(5, 2),
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: {
-        min: 0,
-        max: 100
+        min: 0
       }
     },
     cover_letter: {

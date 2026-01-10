@@ -21,7 +21,7 @@ router.post(
     body('title').notEmpty().withMessage('Job title is required'),
     body('description').notEmpty().withMessage('Job description is required'),
     body('job_type').isIn(['full-time', 'part-time', 'internship', 'contract']).withMessage('Invalid job type'),
-    body('required_score_min').isFloat({ min: 0, max: 100 }).withMessage('Minimum score must be between 0 and 100')
+    body('required_score_min').isFloat({ min: 0 }).withMessage('Minimum points must be 0 or greater')
   ],
   validate,
   jobController.createJob

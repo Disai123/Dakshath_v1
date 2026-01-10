@@ -29,6 +29,18 @@ export const studentService = {
     const endpoint = id ? `/students/${id}/certificates` : '/students/certificates';
     const response = await api.get(endpoint);
     return response.data;
+  },
+
+  updateProfile: async (profileData) => {
+    const response = await api.put('/students/profile', profileData);
+    return response.data;
+  },
+
+  downloadProfile: async (studentId) => {
+    const response = await api.get(`/students/${studentId}/download`, {
+      responseType: 'blob' // Important: tell axios to expect binary data
+    });
+    return response.data;
   }
 };
 

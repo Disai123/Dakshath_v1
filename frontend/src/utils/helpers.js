@@ -39,7 +39,7 @@ export const getQualificationStatus = (studentScore, requiredScore) => {
   const student = parseFloat(studentScore) || 0;
   const required = parseFloat(requiredScore) || 0;
 
-  if (isNaN(student) && student !== 0) {
+  if (isNaN(student)) {
     return {
       status: 'not_qualified',
       message: 'Score not available',

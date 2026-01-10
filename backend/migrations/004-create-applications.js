@@ -31,7 +31,7 @@ module.exports = {
         defaultValue: 'applied'
       },
       score_at_application: {
-        type: Sequelize.DECIMAL(5, 2),
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false
       },
       cover_letter: {
