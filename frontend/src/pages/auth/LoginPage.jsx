@@ -149,8 +149,8 @@ const LoginPage = () => {
                 setPassword('');
               }}
               className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${loginType === 'student'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
               Student
@@ -163,13 +163,26 @@ const LoginPage = () => {
                 setPassword('');
               }}
               className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${loginType === 'hr'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
               HR
             </button>
-            {/* Admin tab hidden - admin can still login by typing admin credentials */}
+            <button
+              onClick={() => {
+                setLoginType('admin');
+                setError('');
+                setEmail('');
+                setPassword('');
+              }}
+              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${loginType === 'admin'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Admin
+            </button>
           </div>
 
           {/* Error Message */}
