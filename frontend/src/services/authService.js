@@ -62,6 +62,27 @@ export const authService = {
   getUser: () => {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
+  },
+
+  // Password Reset Methods
+  requestPasswordReset: async (email) => {
+    const response = await api.post('/password-reset/request', { email });
+    return response.data;
+  },
+
+  validateResetToken: async (token) => {
+    const response = await api.get(`/password-reset/validate/${token}`);
+    return response.data;
+  },
+
+  getResetTokenInfo: async (token) => {
+    const response = await api.get(`/password-reset/token-info/${token}`);
+    return response.data;
+  },
+
+  resetPassword: async (token, newPassword) => {
+    const response = await api.post('/password-reset/reset', { token, newPassword });
+    return response.data;
   }
 };
 

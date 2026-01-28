@@ -44,6 +44,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    reset_password_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    reset_password_expires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     // Personal Information
     phone: {
       type: DataTypes.STRING(20),
@@ -159,6 +167,63 @@ module.exports = (sequelize, DataTypes) => {
     return await bcrypt.compare(candidatePassword, this.password);
   };
 
+  User.prototype.generatePasswordResetToken = async function () {
+    const crypto = require('crypto');
+    const bcrypt = require('bcryptjs');
+
+    // Generate a random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Hash the token before storing
+    const hashedToken = await bcrypt.hash(resetToken, 10);
+
+    // Set token and expiration (1 hour from now)
+    this.reset_password_token = hashedToken;
+    this.reset_password_expires = new Date(Date.now() + 3600000); // 1 hour
+
+    await this.save();
+
+    // Return the unhashed token to send via email
+    return resetToken;
+  };
+
+  User.prototype.isResetTokenValid = function () {
+    if (!this.reset_password_token || !this.reset_password_expires) {
+      return false;
+    }
+    return new Date() < new Date(this.reset_password_expires);
+  };
+
+  User.prototype.clearResetToken = async function () {
+    this.reset_password_token = null;
+    this.reset_password_expires = null;
+    await this.save();
+  };
+
+  // Class methods
+  User.findByResetToken = async function (token) {
+    const bcrypt = require('bcryptjs');
+    const { Op } = require('sequelize');
+
+    // Find all users with non-null reset tokens that haven't expired
+    const users = await this.findAll({
+      where: {
+        reset_password_token: { [Op.ne]: null },
+        reset_password_expires: { [Op.gt]: new Date() }
+      }
+    });
+
+    // Check each user's hashed token against the provided token
+    for (const user of users) {
+      const isMatch = await bcrypt.compare(token, user.reset_password_token);
+      if (isMatch) {
+        return user;
+      }
+    }
+
+    return null;
+  };
+
   // Instance method to get public profile
   User.prototype.toJSON = function () {
     const values = Object.assign({}, this.get());
@@ -168,4 +233,3 @@ module.exports = (sequelize, DataTypes) => {
 
   return User;
 };
-

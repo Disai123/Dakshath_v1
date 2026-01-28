@@ -19,14 +19,14 @@ const getProxyTarget = (url) => {
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
-  
+
   // Get API URL from environment variable
   const API_URL = env.VITE_API_URL || 'http://localhost:5001/api';
 
   return {
     plugins: [react()],
     server: {
-      port: 5173,
+      port: 5174,
       allowedHosts: [
         'dakshath.gnanamai.com'
       ],

@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Pages
 import LandingPage from './pages/common/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import AuthCallbackPage from './pages/auth/AuthCallbackPage';
 import CompanyRegistrationPage from './pages/common/CompanyRegistrationPage';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -67,6 +69,8 @@ function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/register/company" element={<CompanyRegistrationPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 

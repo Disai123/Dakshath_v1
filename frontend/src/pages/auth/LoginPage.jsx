@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { Briefcase, Mail, Lock, AlertCircle } from 'lucide-react';
@@ -227,6 +227,15 @@ const LoginPage = () => {
                   placeholder="Enter your password"
                 />
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary hover:text-primary-dark"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             <button

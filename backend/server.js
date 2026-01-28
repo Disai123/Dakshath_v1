@@ -5,7 +5,10 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const passport = require('./config/passport');
-const routes = require('./routes');
+const studentRoutes = require('./routes/students');
+const jobRoutes = require('./routes/jobs');
+const applicationRoutes = require('./routes/applications');
+const passwordResetRoutes = require('./routes/passwordReset');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const logger = require('./utils/logger');
@@ -45,7 +48,14 @@ app.use(passport.initialize());
 app.use('/api/', apiLimiter);
 
 // API routes
-app.use('/api', routes);
+// API routes
+// app.use('/api', routes); // Deprecated in favor of individual routes
+
+app.use('/api/auth', require('./routes/auth')); // Assuming auth route exists separately or needs to be checked
+app.use('/api/students', studentRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/password-reset', passwordResetRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -53,13 +63,13 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Dakshath API Server',
     version: '1.0.0',
-      endpoints: {
-        health: '/api/health',
-        auth: '/api/auth',
-        jobs: '/api/jobs',
-        applications: '/api/applications',
-        hrRequests: '/api/hr-requests'
-      }
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      jobs: '/api/jobs',
+      applications: '/api/applications',
+      hrRequests: '/api/hr-requests'
+    }
   });
 });
 
