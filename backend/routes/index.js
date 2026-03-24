@@ -10,6 +10,7 @@ const hrRoutes = require('./hr');
 const adminRoutes = require('./admin');
 const notificationRoutes = require('./notifications');
 const hrRequestRoutes = require('./hrRequests');
+const passwordResetRoutes = require('./passwordReset');
 const publicRoutes = require('./public');
 
 // Public routes (no authentication)
@@ -25,6 +26,7 @@ router.use('/hr', hrRoutes);
 router.use('/admin', adminRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/hr-requests', hrRequestRoutes);
+router.use('/password-reset', passwordResetRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

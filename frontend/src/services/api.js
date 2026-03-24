@@ -1,8 +1,20 @@
 import axios from 'axios';
 import { API_URL } from '../utils/constants';
 
+// Ensure API_URL doesn't end with a slash or have double /api
+const getBaseURL = (url) => {
+  if (!url) return 'http://localhost:5001/api';
+  // Remove trailing slashes
+  let baseUrl = url.replace(/\/+$/, '');
+  // If the user's environment variable has double /api, fix it
+  if (baseUrl.endsWith('/api/api')) {
+    baseUrl = baseUrl.replace(/\/api\/api$/, '/api');
+  }
+  return baseUrl;
+};
+
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: getBaseURL(API_URL),
   headers: {
     'Content-Type': 'application/json'
   }

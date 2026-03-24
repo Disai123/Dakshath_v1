@@ -12,6 +12,7 @@ const passwordResetRoutes = require('./routes/passwordReset');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const logger = require('./utils/logger');
+const routes = require('./routes/index');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -48,14 +49,7 @@ app.use(passport.initialize());
 app.use('/api/', apiLimiter);
 
 // API routes
-// API routes
-// app.use('/api', routes); // Deprecated in favor of individual routes
-
-app.use('/api/auth', require('./routes/auth')); // Assuming auth route exists separately or needs to be checked
-app.use('/api/students', studentRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/applications', applicationRoutes);
-app.use('/api/password-reset', passwordResetRoutes);
+app.use('/api', routes);
 
 // Root route
 app.get('/', (req, res) => {
