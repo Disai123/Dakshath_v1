@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { applicationService } from '../../services/applicationService';
 import { hrRequestService } from '../../services/hrRequestService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -96,6 +97,7 @@ const HRApplicationsPage = () => {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
+            <BackLink to="/hr/dashboard" label="Back to Dashboard" />
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Applications</h1>
 
             {isLoading ? (

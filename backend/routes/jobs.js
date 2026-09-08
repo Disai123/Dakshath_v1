@@ -10,6 +10,11 @@ const validate = require('../middleware/validation');
 router.get('/', authenticate.optional, jobController.getAllJobs);
 router.get('/search', authenticate.optional, jobController.searchJobs);
 router.get('/qualified', authenticate, requireStudent, jobController.getQualifiedJobs);
+
+// Static path segments MUST be registered before /:id or they are shadowed
+router.get('/company/all', authenticate, requireHR, jobController.getCompanyJobs);
+router.get('/admin/all', authenticate, requireAdmin, jobController.getAllJobs);
+
 router.get('/:id', authenticate.optional, jobController.getJobById);
 
 // HR routes
@@ -27,12 +32,8 @@ router.post(
   jobController.createJob
 );
 
-router.get('/company/all', authenticate, requireHR, jobController.getCompanyJobs);
 router.put('/:id', authenticate, requireHR, jobController.updateJob);
 router.delete('/:id', authenticate, requireHR, jobController.deleteJob);
-
-// Admin routes
-router.get('/admin/all', authenticate, requireAdmin, jobController.getAllJobs);
 
 module.exports = router;
 

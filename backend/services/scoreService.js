@@ -1,5 +1,17 @@
 const { sequelize } = require('../models');
 
+// Set to true to include hackathon points in Dakshath scores/leaderboard (no DB change needed).
+const SHOW_HACKATHON_IN_DAKSHATH = false;
+
+const toInt = (value) => parseInt(value, 10) || 0;
+
+const displayTotalPoints = (score) => {
+  if (SHOW_HACKATHON_IN_DAKSHATH) {
+    return toInt(score.total_points);
+  }
+  return toInt(score.total_course_points) + toInt(score.total_project_points);
+};
+
 /**
  * Get student score from LMS student_scores table
  */
@@ -30,16 +42,18 @@ const getStudentScore = async (studentId) => {
     if (scores && scores.length > 0) {
       const score = scores[0];
       return {
-        total_points: parseInt(score.total_points) || 0,
-        total_course_points: parseInt(score.total_course_points) || 0,
-        total_project_points: parseInt(score.total_project_points) || 0,
-        total_hackathon_points: parseInt(score.total_hackathon_points) || 0,
-        courses_completed_count: parseInt(score.courses_completed_count) || 0,
-        projects_approved_count: parseInt(score.projects_approved_count) || 0,
-        hackathons_approved_count: parseInt(score.hackathons_approved_count) || 0,
+        // Keep LMS total_points for job matching; UI uses course+project when hackathons are hidden
+        total_points: toInt(score.total_points),
+        total_course_points: toInt(score.total_course_points),
+        total_project_points: toInt(score.total_project_points),
+        total_hackathon_points: toInt(score.total_hackathon_points),
+        courses_completed_count: toInt(score.courses_completed_count),
+        projects_approved_count: toInt(score.projects_approved_count),
+        hackathons_approved_count: toInt(score.hackathons_approved_count),
         master_certificate_issued: score.master_certificate_issued || false,
         master_certificate_issued_at: score.master_certificate_issued_at,
-        last_calculated_at: score.last_calculated_at
+        last_calculated_at: score.last_calculated_at,
+        display_total_points: displayTotalPoints(score)
       };
     }
 
@@ -54,7 +68,8 @@ const getStudentScore = async (studentId) => {
       hackathons_approved_count: 0,
       master_certificate_issued: false,
       master_certificate_issued_at: null,
-      last_calculated_at: null
+      last_calculated_at: null,
+      display_total_points: 0
     };
   } catch (error) {
     console.error('Error getting student score:', error);
@@ -67,6 +82,7 @@ const getStudentScore = async (studentId) => {
       projects_approved_count: 0,
       hackathons_approved_count: 0,
       master_certificate_issued: false,
+      display_total_points: 0,
       error: 'Unable to fetch score'
     };
   }
@@ -77,6 +93,11 @@ const getStudentScore = async (studentId) => {
  */
 const getTopStudents = async (limit = 10) => {
   try {
+    // When hackathons are hidden, rank by course + project only (LMS total_points still includes hackathons).
+    const orderBy = SHOW_HACKATHON_IN_DAKSHATH
+      ? 'ss.total_points DESC'
+      : '(COALESCE(ss.total_course_points, 0) + COALESCE(ss.total_project_points, 0)) DESC';
+
     const students = await sequelize.query(
       `SELECT 
         ss.student_id,
@@ -94,7 +115,7 @@ const getTopStudents = async (limit = 10) => {
        FROM student_scores ss
        JOIN users u ON ss.student_id = u.id
        WHERE u.role = 'student'
-       ORDER BY ss.total_points DESC
+       ORDER BY ${orderBy}
        LIMIT :limit`,
       {
         replacements: { limit: parseInt(limit) },
@@ -102,7 +123,16 @@ const getTopStudents = async (limit = 10) => {
       }
     );
 
-    return students;
+    return students.map((student) => ({
+      ...student,
+      total_points: displayTotalPoints(student),
+      total_course_points: toInt(student.total_course_points),
+      total_project_points: toInt(student.total_project_points),
+      total_hackathon_points: toInt(student.total_hackathon_points),
+      courses_completed_count: toInt(student.courses_completed_count),
+      projects_approved_count: toInt(student.projects_approved_count),
+      hackathons_approved_count: toInt(student.hackathons_approved_count)
+    }));
   } catch (error) {
     console.error('Error getting top students:', error);
     return [];
@@ -110,7 +140,7 @@ const getTopStudents = async (limit = 10) => {
 };
 
 module.exports = {
+  getTopStudents,
   getStudentScore,
-  getTopStudents
+  SHOW_HACKATHON_IN_DAKSHATH
 };
-

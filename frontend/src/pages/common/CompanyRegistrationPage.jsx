@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Building2, Mail, Lock, Phone, Globe, MapPin, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { companyService } from '../../services/companyService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import BackLink from '../../components/common/BackLink';
 
 const CompanyRegistrationPage = () => {
   const navigate = useNavigate();
@@ -120,6 +121,7 @@ const CompanyRegistrationPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light to-white py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        <BackLink to="/" label="Back to Home" />
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center text-primary hover:text-primary-dark mb-4">

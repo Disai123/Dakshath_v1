@@ -1,12 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, LogOut, User } from 'lucide-react';
+import { Bell, LogOut, User, Briefcase } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { useState, useEffect } from 'react';
 
 const Header = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -39,11 +38,12 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-gray-100/90 backdrop-blur-xl border-b border-gray-200/80 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to={user ? getDashboardPath() : "/"} className="flex items-center">
-            <h1 className="text-2xl font-bold text-primary">Dakshath</h1>
+          <Link to={user ? getDashboardPath() : "/"} className="flex items-center gap-2">
+            <Briefcase className="w-7 h-7 text-primary" />
+            <h1 className="text-2xl font-bold text-primary font-display">Dakshath</h1>
           </Link>
 
           <div className="flex items-center gap-4">
@@ -51,7 +51,7 @@ const Header = () => {
               <>
                 <Link
                   to="/notifications"
-                  className="relative p-2 text-gray-600 hover:text-gray-900"
+                  className="relative p-2 text-gray-600 hover:text-amber-600 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
@@ -77,7 +77,7 @@ const Header = () => {
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-600 hover:text-gray-900"
+                  className="p-2 text-gray-600 hover:text-amber-600 transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-5 h-5" />
@@ -85,10 +85,10 @@ const Header = () => {
               </>
             ) : (
               <>
-                <Link to="/jobs" className="text-gray-600 hover:text-gray-900">
+                <Link to="/jobs" className="text-gray-600 hover:text-amber-600 transition-colors">
                   Browse Jobs
                 </Link>
-                <Link to="/login" className="text-gray-600 hover:text-gray-900">
+                <Link to="/login" className="text-gray-600 hover:text-amber-600 transition-colors">
                   Login
                 </Link>
                 <Link to="/login" className="btn-primary">
@@ -104,4 +104,3 @@ const Header = () => {
 };
 
 export default Header;
-

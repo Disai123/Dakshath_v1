@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { authService } from '../../services/authService';
+import BackLink from '../../components/common/BackLink';
 
 const ResetPasswordPage = () => {
     const { token } = useParams();
@@ -73,7 +74,7 @@ const ResetPasswordPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-gray-600">Validating reset link...</p>
                 </div>
             </div>
@@ -96,7 +97,7 @@ const ResetPasswordPage = () => {
                     <div className="space-y-3">
                         <Link
                             to="/forgot-password"
-                            className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+                            className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover transition-colors duration-200"
                         >
                             Request New Reset Link
                         </Link>
@@ -115,9 +116,12 @@ const ResetPasswordPage = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+                <BackLink to="/login" label="Back to Login" className="mb-0" />
                 <div>
                     <div className="flex justify-center">
-                        <h1 className="text-4xl font-bold text-indigo-600">Dakshath</h1>
+                        <Link to="/" className="text-4xl font-bold text-primary hover:opacity-90">
+                            Dakshath
+                        </Link>
                     </div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                         Reset Password
@@ -138,7 +142,7 @@ const ResetPasswordPage = () => {
                             <input
                                 id="newPassword"
                                 type="password"
-                                className={`appearance-none block w-full px-3 py-3 border ${errors.newPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                                className={`appearance-none block w-full px-3 py-3 border ${errors.newPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm`}
                                 {...register('newPassword', {
                                     required: 'Password is required',
                                     minLength: { value: 6, message: 'Password must be at least 6 characters' }
@@ -158,7 +162,7 @@ const ResetPasswordPage = () => {
                             <input
                                 id="confirmPassword"
                                 type="password"
-                                className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                                className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm`}
                                 {...register('confirmPassword', {
                                     required: 'Please confirm your password',
                                     validate: value => value === newPassword || 'Passwords do not match'
@@ -174,7 +178,7 @@ const ResetPasswordPage = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
                                 <div className="flex items-center">
@@ -188,6 +192,17 @@ const ResetPasswordPage = () => {
                                 'Reset Password'
                             )}
                         </button>
+                    </div>
+
+                    <div className="text-center space-y-2">
+                        <Link to="/login" className="font-medium text-primary hover:text-secondary">
+                            Back to Login
+                        </Link>
+                        <div>
+                            <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
+                                Back to Home
+                            </Link>
+                        </div>
                     </div>
                 </form>
             </div>

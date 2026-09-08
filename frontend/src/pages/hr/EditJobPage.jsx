@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { jobService } from '../../services/jobService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
@@ -103,6 +104,7 @@ const EditJobPage = () => {
                 <Sidebar />
                 <main className="flex-1 p-8">
                     <div className="max-w-4xl mx-auto">
+                        <BackLink to="/hr/jobs" label="Back to Job Listings" />
                         <div className="mb-6">
                             <h1 className="text-3xl font-bold text-gray-900">Edit Job Listing</h1>
                             {job?.created_at && (

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { applicationService } from '../../services/applicationService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDate } from '../../utils/helpers';
@@ -33,6 +34,7 @@ const ApplicationsPage = () => {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
+            <BackLink to="/dashboard" label="Back to Dashboard" />
             <h1 className="text-3xl font-bold text-gray-900 mb-8">My Applications</h1>
 
             {isLoading ? (

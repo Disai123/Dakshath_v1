@@ -5,11 +5,12 @@ import { jobService } from '../../services/jobService';
 import { publicService } from '../../services/publicService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatScore } from '../../utils/helpers';
+import { SHOW_HACKATHON_IN_DAKSHATH } from '../../utils/constants';
 
 // Top Students Leaderboard Component with Auto-Scroll
 const TopStudentsLeaderboard = () => {
   const { data, isLoading } = useQuery({
-    queryKey: ['topStudents'],
+    queryKey: ['topStudents', SHOW_HACKATHON_IN_DAKSHATH],
     queryFn: () => publicService.getTopStudents(10),
     retry: 1,
     refetchInterval: 60000 // Refresh every minute
@@ -17,20 +18,33 @@ const TopStudentsLeaderboard = () => {
 
   const students = data?.data || [];
 
+  const getDisplayPoints = (student) => {
+    if (SHOW_HACKATHON_IN_DAKSHATH) {
+      return student.total_points ?? 0;
+    }
+    // Prefer course+project so UI stays consistent even if API still returns LMS total_points
+    const course = Number(student.total_course_points) || 0;
+    const project = Number(student.total_project_points) || 0;
+    if (student.total_course_points != null || student.total_project_points != null) {
+      return course + project;
+    }
+    return student.total_points ?? 0;
+  };
+
   return (
-    <div className="relative bg-gradient-to-br from-yellow-50 via-white to-blue-50 rounded-3xl shadow-2xl p-6 border-2 border-yellow-200 overflow-hidden">
+    <div className="relative bg-gradient-to-br from-amber-50 via-white to-slate-50 rounded-3xl shadow-2xl p-6 border-2 border-secondary/30 overflow-hidden">
       {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-200 rounded-full opacity-20 -mr-16 -mt-16"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-200 rounded-full opacity-20 -ml-12 -mb-12"></div>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/20 rounded-full opacity-40 -mr-16 -mt-16"></div>
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full opacity-40 -ml-12 -mb-12"></div>
 
       {/* Header */}
       <div className="relative flex items-center justify-center gap-2 mb-4">
-        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-10 rounded-2xl"></div>
-        <Trophy className="w-6 h-6 text-yellow-600 animate-bounce" />
-        <h3 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-10 rounded-2xl"></div>
+        <Trophy className="w-6 h-6 text-secondary animate-bounce" />
+        <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Top Performers
         </h3>
-        <Trophy className="w-6 h-6 text-yellow-600 animate-bounce" style={{ animationDelay: '0.2s' }} />
+        <Trophy className="w-6 h-6 text-secondary animate-bounce" style={{ animationDelay: '0.2s' }} />
       </div>
 
       {isLoading ? (
@@ -44,31 +58,31 @@ const TopStudentsLeaderboard = () => {
             {/* Duplicate students for seamless loop */}
             {[...students, ...students].map((student, index) => {
               const actualIndex = index % students.length;
-              // Different background colors for variety
+              // Different background colors for variety (Gnanamai-aligned)
               const bgColors = [
-                'bg-gradient-to-r from-yellow-50 to-orange-50',
-                'bg-gradient-to-r from-blue-50 to-cyan-50',
-                'bg-gradient-to-r from-purple-50 to-pink-50',
+                'bg-gradient-to-r from-amber-50 to-secondary-light',
+                'bg-gradient-to-r from-primary-light to-slate-50',
+                'bg-gradient-to-r from-stone-50 to-amber-50',
                 'bg-gradient-to-r from-green-50 to-emerald-50',
-                'bg-gradient-to-r from-red-50 to-rose-50',
+                'bg-gradient-to-r from-slate-50 to-primary-light',
               ];
               const bgColor = bgColors[actualIndex % bgColors.length];
 
               return (
                 <div
                   key={`${student.student_id}-${index}`}
-                  className={`flex items-center gap-2 p-2 rounded-xl ${bgColor} shadow-md hover:shadow-lg transition-all duration-300 border-2 ${actualIndex < 3 ? 'border-yellow-400' : 'border-transparent'
-                    } hover:border-yellow-400 transform hover:scale-105`}
+                  className={`flex items-center gap-2 p-2 rounded-xl ${bgColor} shadow-md hover:shadow-lg transition-all duration-300 border-2 ${actualIndex < 3 ? 'border-secondary' : 'border-transparent'
+                    } hover:border-secondary transform hover:scale-105`}
                 >
                   {/* Rank Badge with Gradient */}
-                  <div className={`relative flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-md ${actualIndex === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' :
+                  <div className={`relative flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-md ${actualIndex === 0 ? 'bg-gradient-to-br from-secondary to-accent text-white' :
                     actualIndex === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white' :
-                      actualIndex === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white' :
-                        'bg-gradient-to-br from-blue-500 to-blue-700 text-white'
+                      actualIndex === 2 ? 'bg-gradient-to-br from-accent to-accent-hover text-white' :
+                        'bg-gradient-to-br from-primary to-primary-hover text-white'
                     }`}>
                     {actualIndex === 0 ? '🥇' : actualIndex === 1 ? '🥈' : actualIndex === 2 ? '🥉' : `#${actualIndex + 1}`}
                     {actualIndex < 3 && (
-                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-yellow-400 rounded-full animate-ping"></div>
+                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-secondary rounded-full animate-ping"></div>
                     )}
                   </div>
 
@@ -82,9 +96,9 @@ const TopStudentsLeaderboard = () => {
                   </div>
 
                   {/* Points Badge */}
-                  <div className="flex-shrink-0 bg-white px-2.5 py-1 rounded-lg border-2 border-blue-300 shadow-sm">
-                    <p className="font-black text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      {student.total_points}
+                  <div className="flex-shrink-0 bg-white px-2.5 py-1 rounded-lg border-2 border-primary/20 shadow-sm">
+                    <p className="font-black text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                      {getDisplayPoints(student)}
                     </p>
                     <p className="text-xs font-bold text-gray-600 uppercase tracking-wide -mt-1">pts</p>
                   </div>
@@ -94,8 +108,8 @@ const TopStudentsLeaderboard = () => {
           </div>
 
           {/* Gradient Overlays for Fade Effect */}
-          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-yellow-50 to-transparent pointer-events-none z-10"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-blue-50 to-transparent pointer-events-none z-10"></div>
+          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-amber-50 to-transparent pointer-events-none z-10"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent pointer-events-none z-10"></div>
         </div>
       ) : (
         <div className="text-center py-12 bg-white rounded-2xl">
@@ -119,17 +133,22 @@ const LandingPage = () => {
   const totalJobs = data?.meta?.total || 0;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-gray-100/90 backdrop-blur-xl border-b border-gray-200/80 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Briefcase className="w-8 h-8 text-primary mr-2" />
-              <h1 className="text-2xl font-bold text-primary">Dakshath</h1>
+              <Link to="/" className="flex items-center">
+                <Briefcase className="w-8 h-8 text-primary mr-2" />
+                <h1 className="text-2xl font-bold text-primary font-display">Dakshath</h1>
+              </Link>
             </div>
             <div className="flex items-center gap-4">
-              <Link to="/login" className="text-gray-600 hover:text-gray-900">
+              <Link to="/jobs" className="text-gray-600 hover:text-amber-600 transition-colors">
+                Browse Jobs
+              </Link>
+              <Link to="/login" className="text-gray-600 hover:text-amber-600 transition-colors">
                 Login
               </Link>
               <Link to="/login" className="btn-primary">
@@ -141,23 +160,24 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-light to-white py-20">
+      <section className="bg-gradient-to-br from-slate-900 via-primary-dark to-slate-900 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            <div className="mx-auto mb-6 h-1 w-24 rounded-full bg-amber-400" />
+            <h1 className="text-5xl font-bold text-white mb-6 font-display">
               Connect Your Academic Success to Career Opportunities
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
               Dakshath bridges the gap between your academic achievements and real-world job opportunities.
               Find positions that match your skills and qualifications.
             </p>
             <div className="flex gap-4 justify-center">
-              <Link to="/login" className="btn-primary text-lg px-8 py-4">
+              <Link to="/login" className="bg-amber-400 hover:bg-amber-300 text-slate-900 text-lg px-8 py-4 rounded-2xl font-semibold transition-colors inline-flex items-center">
                 Get Started
                 <ArrowRight className="w-5 h-5 ml-2 inline" />
               </Link>
-              <Link to="/login" className="btn-secondary text-lg px-8 py-4">
-                Learn More
+              <Link to="/jobs" className="bg-white/10 hover:bg-white/20 text-white border border-white/30 text-lg px-8 py-4 rounded-2xl font-semibold transition-colors">
+                Browse Jobs
               </Link>
             </div>
           </div>
@@ -286,13 +306,13 @@ const LandingPage = () => {
                   <div className="grid grid-rows-3 grid-flow-col gap-4 flex-shrink-0">
                     {/* Row 1 */}
                     {[
-                      { name: 'TechCorp', color: 'text-blue-600', font: 'font-bold' },
-                      { name: 'InnovateLabs', color: 'text-purple-600', font: 'font-extrabold italic' },
+                      { name: 'TechCorp', color: 'text-primary', font: 'font-bold' },
+                      { name: 'InnovateLabs', color: 'text-secondary', font: 'font-extrabold italic' },
                       { name: 'FutureSoft', color: 'text-orange-600', font: 'font-bold' },
                       { name: 'DataFlow', color: 'text-cyan-600', font: 'font-semibold' },
                       { name: 'CloudNine', color: 'text-sky-600', font: 'font-bold' },
                       { name: 'CodeCraft', color: 'text-green-600', font: 'font-extrabold' },
-                      { name: 'DevHub', color: 'text-indigo-700', font: 'font-bold' }
+                      { name: 'DevHub', color: 'text-primary-dark', font: 'font-bold' }
                     ].map((company, idx) => (
                       <div key={`r1-${idx}`} className="flex items-center justify-center h-20 px-4">
                         <span className={`${company.color} ${company.font} text-2xl hover:scale-110 transition-transform cursor-pointer`}>
@@ -307,8 +327,8 @@ const LandingPage = () => {
                       { name: 'BuildIt', color: 'text-orange-500', font: 'font-extrabold' },
                       { name: 'ScaleUp', color: 'text-emerald-600', font: 'font-bold' },
                       { name: 'GrowthCo', color: 'text-lime-600', font: 'font-semibold' },
-                      { name: 'LaunchPad', color: 'text-blue-700', font: 'font-bold' },
-                      { name: 'Nexus', color: 'text-purple-700', font: 'font-extrabold' }
+                      { name: 'LaunchPad', color: 'text-primary-hover', font: 'font-bold' },
+                      { name: 'Nexus', color: 'text-secondary-dark', font: 'font-extrabold' }
                     ].map((company, idx) => (
                       <div key={`r2-${idx}`} className="flex items-center justify-center h-20 px-4">
                         <span className={`${company.color} ${company.font} text-2xl hover:scale-110 transition-transform cursor-pointer`}>
@@ -321,7 +341,7 @@ const LandingPage = () => {
                       { name: 'Synergy', color: 'text-orange-600', font: 'font-bold italic' },
                       { name: 'Quantum', color: 'text-violet-600', font: 'font-black' },
                       { name: 'Vertex', color: 'text-teal-600', font: 'font-bold' },
-                      { name: 'Zenith', color: 'text-blue-600', font: 'font-extrabold' },
+                      { name: 'Zenith', color: 'text-primary', font: 'font-extrabold' },
                       { name: 'Apex', color: 'text-amber-600', font: 'font-bold' },
                       { name: 'Pinnacle', color: 'text-yellow-700', font: 'font-extrabold italic' }
                     ].map((company, idx) => (
@@ -337,13 +357,13 @@ const LandingPage = () => {
                   <div className="grid grid-rows-3 grid-flow-col gap-4 flex-shrink-0">
                     {/* Row 1 */}
                     {[
-                      { name: 'TechCorp', color: 'text-blue-600', font: 'font-bold' },
-                      { name: 'InnovateLabs', color: 'text-purple-600', font: 'font-extrabold italic' },
+                      { name: 'TechCorp', color: 'text-primary', font: 'font-bold' },
+                      { name: 'InnovateLabs', color: 'text-secondary', font: 'font-extrabold italic' },
                       { name: 'FutureSoft', color: 'text-orange-600', font: 'font-bold' },
                       { name: 'DataFlow', color: 'text-cyan-600', font: 'font-semibold' },
                       { name: 'CloudNine', color: 'text-sky-600', font: 'font-bold' },
                       { name: 'CodeCraft', color: 'text-green-600', font: 'font-extrabold' },
-                      { name: 'DevHub', color: 'text-indigo-700', font: 'font-bold' }
+                      { name: 'DevHub', color: 'text-primary-dark', font: 'font-bold' }
                     ].map((company, idx) => (
                       <div key={`r1-dup-${idx}`} className="flex items-center justify-center h-20 px-4">
                         <span className={`${company.color} ${company.font} text-2xl hover:scale-110 transition-transform cursor-pointer`}>
@@ -358,8 +378,8 @@ const LandingPage = () => {
                       { name: 'BuildIt', color: 'text-orange-500', font: 'font-extrabold' },
                       { name: 'ScaleUp', color: 'text-emerald-600', font: 'font-bold' },
                       { name: 'GrowthCo', color: 'text-lime-600', font: 'font-semibold' },
-                      { name: 'LaunchPad', color: 'text-blue-700', font: 'font-bold' },
-                      { name: 'Nexus', color: 'text-purple-700', font: 'font-extrabold' }
+                      { name: 'LaunchPad', color: 'text-primary-hover', font: 'font-bold' },
+                      { name: 'Nexus', color: 'text-secondary-dark', font: 'font-extrabold' }
                     ].map((company, idx) => (
                       <div key={`r2-dup-${idx}`} className="flex items-center justify-center h-20 px-4">
                         <span className={`${company.color} ${company.font} text-2xl hover:scale-110 transition-transform cursor-pointer`}>
@@ -372,7 +392,7 @@ const LandingPage = () => {
                       { name: 'Synergy', color: 'text-orange-600', font: 'font-bold italic' },
                       { name: 'Quantum', color: 'text-violet-600', font: 'font-black' },
                       { name: 'Vertex', color: 'text-teal-600', font: 'font-bold' },
-                      { name: 'Zenith', color: 'text-blue-600', font: 'font-extrabold' },
+                      { name: 'Zenith', color: 'text-primary', font: 'font-extrabold' },
                       { name: 'Apex', color: 'text-amber-600', font: 'font-bold' },
                       { name: 'Pinnacle', color: 'text-yellow-700', font: 'font-extrabold italic' }
                     ].map((company, idx) => (

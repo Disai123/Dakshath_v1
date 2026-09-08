@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { authService } from '../../services/authService';
+import BackLink from '../../components/common/BackLink';
 
 const ForgotPasswordPage = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -53,13 +54,13 @@ const ForgotPasswordPage = () => {
                         <div className="flex flex-col space-y-3">
                             <Link
                                 to="/login"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors duration-200"
                             >
                                 Back to Login
                             </Link>
                             <button
                                 onClick={() => setIsSubmitted(false)}
-                                className="w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                                className="w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors duration-200"
                             >
                                 Try different email
                             </button>
@@ -73,9 +74,12 @@ const ForgotPasswordPage = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+                <BackLink to="/login" label="Back to Login" className="mb-0" />
                 <div>
                     <div className="flex justify-center">
-                        <h1 className="text-4xl font-bold text-indigo-600">Dakshath</h1>
+                        <Link to="/" className="text-4xl font-bold text-primary hover:opacity-90">
+                            Dakshath
+                        </Link>
                     </div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                         Forgot Password
@@ -96,7 +100,7 @@ const ForgotPasswordPage = () => {
                                 name="email"
                                 type="email"
                                 autoComplete="email"
-                                className={`appearance-none block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                                className={`appearance-none block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm`}
                                 placeholder="Enter your registered email"
                                 {...register('email', {
                                     required: 'Email is required',
@@ -116,7 +120,7 @@ const ForgotPasswordPage = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
                                 <div className="flex items-center">
@@ -132,10 +136,15 @@ const ForgotPasswordPage = () => {
                         </button>
                     </div>
 
-                    <div className="text-center">
-                        <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
+                    <div className="text-center space-y-2">
+                        <Link to="/login" className="font-medium text-primary hover:text-secondary transition-colors duration-200">
                             Back to Login
                         </Link>
+                        <div>
+                            <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
+                                Back to Home
+                            </Link>
+                        </div>
                     </div>
                 </form>
             </div>

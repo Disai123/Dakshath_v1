@@ -3,12 +3,15 @@ import { useState } from 'react';
 import { User, GraduationCap, Briefcase, FileText, Edit, Save, X } from 'lucide-react';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { studentService } from '../../services/studentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ProfileCompletionBar from '../../components/student/ProfileCompletionBar';
 import MultiInput from '../../components/common/MultiInput';
 import { formatScore, formatDate } from '../../utils/helpers';
 import { Trophy, Award } from 'lucide-react';
+import { SHOW_HACKATHON_IN_DAKSHATH } from '../../utils/constants';
+
 
 const ProfilePage = () => {
   const queryClient = useQueryClient();
@@ -69,6 +72,19 @@ const ProfilePage = () => {
   const achievements = achievementsData?.data;
   const profileCompletion = profileData?.data?.profile_completion_percentage || 0;
 
+  // When hackathons are hidden, recompute count/points from visible groups only (API totals still include them).
+  const visibleAchievementGroups = Object.fromEntries(
+    Object.entries(achievements?.grouped || {}).filter(
+      ([type]) => SHOW_HACKATHON_IN_DAKSHATH || type !== 'hackathon_approval'
+    )
+  );
+  const visibleAchievementItems = Object.values(visibleAchievementGroups).flat();
+  const visibleAchievementCount = visibleAchievementItems.length;
+  const visibleAchievementPoints = visibleAchievementItems.reduce(
+    (sum, item) => sum + (Number(item.points_awarded) || 0),
+    0
+  );
+
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -85,6 +101,7 @@ const ProfilePage = () => {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-5xl mx-auto">
+            <BackLink to="/dashboard" label="Back to Dashboard" />
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
               {!isEditing ? (
@@ -475,8 +492,8 @@ const ProfilePage = () => {
                   </div>
 
                   {isEditing && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm text-blue-800">
+                    <div className="bg-primary-light border border-primary/20 rounded-lg p-3">
+                      <p className="text-sm text-primary">
                         💡 <strong>Tip:</strong> Upload your resume to Google Drive, Dropbox, or any file hosting service and paste the shareable link here.
                       </p>
                     </div>
@@ -487,25 +504,31 @@ const ProfilePage = () => {
               {/* Academic Score Section */}
               <div className="card">
                 <h2 className="text-xl font-semibold mb-4">Academic Score</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className={`grid grid-cols-2 ${SHOW_HACKATHON_IN_DAKSHATH ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-4`}>
+                  <div className="text-center p-4 bg-primary-light rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Total Points</p>
-                    <p className="text-3xl font-bold text-blue-600">{score?.total_points || 0}</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {SHOW_HACKATHON_IN_DAKSHATH
+                        ? (score?.total_points || 0)
+                        : ((score?.total_course_points || 0) + (score?.total_project_points || 0))}
+                    </p>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Course Points</p>
                     <p className="text-3xl font-bold text-green-600">{score?.total_course_points || 0}</p>
                   </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-center p-4 bg-secondary-light rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Project Points</p>
-                    <p className="text-3xl font-bold text-purple-600">{score?.total_project_points || 0}</p>
+                    <p className="text-3xl font-bold text-secondary-dark">{score?.total_project_points || 0}</p>
                   </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
-                    <p className="text-3xl font-bold text-orange-600">{score?.total_hackathon_points || 0}</p>
-                  </div>
+                  {SHOW_HACKATHON_IN_DAKSHATH && (
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
+                      <p className="text-3xl font-bold text-orange-600">{score?.total_hackathon_points || 0}</p>
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div className={`grid ${SHOW_HACKATHON_IN_DAKSHATH ? 'grid-cols-3' : 'grid-cols-2'} gap-4 pt-4 border-t`}>
                   <div>
                     <p className="text-sm text-gray-600">Courses Completed</p>
                     <p className="text-xl font-bold">{score?.courses_completed_count || 0}</p>
@@ -514,10 +537,12 @@ const ProfilePage = () => {
                     <p className="text-sm text-gray-600">Projects Approved</p>
                     <p className="text-xl font-bold">{score?.projects_approved_count || 0}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Hackathons</p>
-                    <p className="text-xl font-bold">{score?.hackathons_approved_count || 0}</p>
-                  </div>
+                  {SHOW_HACKATHON_IN_DAKSHATH && (
+                    <div>
+                      <p className="text-sm text-gray-600">Hackathons</p>
+                      <p className="text-xl font-bold">{score?.hackathons_approved_count || 0}</p>
+                    </div>
+                  )}
                 </div>
                 {score?.master_certificate_issued && (
                   <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
@@ -528,18 +553,20 @@ const ProfilePage = () => {
               </div>
 
               {/* Achievements Section */}
-              {achievements?.achievements && achievements.achievements.length > 0 && (
+              {visibleAchievementCount > 0 && (
                 <div className="card">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                     <Award className="w-5 h-5" />
-                    Achievements ({achievements.total_count})
+                    Achievements ({SHOW_HACKATHON_IN_DAKSHATH ? (achievements.total_count) : visibleAchievementCount})
                   </h2>
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="mb-4 p-3 bg-primary-light rounded-lg">
                     <p className="text-sm text-gray-600">Total Achievement Points</p>
-                    <p className="text-2xl font-bold text-blue-600">{achievements.total_points || 0}</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {SHOW_HACKATHON_IN_DAKSHATH ? (achievements.total_points || 0) : visibleAchievementPoints}
+                    </p>
                   </div>
                   <div className="space-y-3">
-                    {Object.entries(achievements.grouped || {}).map(([type, items]) => (
+                    {Object.entries(visibleAchievementGroups).map(([type, items]) => (
                       <div key={type} className="border border-gray-200 rounded-lg p-4">
                         <h3 className="font-semibold mb-2 capitalize">{type.replace('_', ' ')}</h3>
                         <div className="space-y-2">

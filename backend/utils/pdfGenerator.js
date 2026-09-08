@@ -1,5 +1,8 @@
 const PDFDocument = require('pdfkit');
 
+// Set to true to show hackathon points/counts again in Dakshath PDFs (no DB change needed).
+const SHOW_HACKATHON_IN_DAKSHATH = false;
+
 /**
  * Generate beautiful student profile PDF
  */
@@ -139,15 +142,21 @@ const generateStudentProfilePDF = (profileData) => {
             addSectionHeader(doc, 'Academic Performance', colors);
 
             const score = profileData.academic_performance.score;
+            const displayTotalPoints = SHOW_HACKATHON_IN_DAKSHATH
+                ? (score.total_points || 0)
+                : ((score.total_course_points || 0) + (score.total_project_points || 0));
             const scoreBoxes = [
-                { label: 'Total Points', value: score.total_points || 0, color: colors.primary },
+                { label: 'Total Points', value: displayTotalPoints, color: colors.primary },
                 { label: 'Course Points', value: score.total_course_points || 0, color: colors.success },
                 { label: 'Project Points', value: score.total_project_points || 0, color: '#8b5cf6' },
-                { label: 'Hackathon Points', value: score.total_hackathon_points || 0, color: '#f59e0b' }
+                // Kept for easy revert — gated by SHOW_HACKATHON_IN_DAKSHATH
+                ...(SHOW_HACKATHON_IN_DAKSHATH
+                    ? [{ label: 'Hackathon Points', value: score.total_hackathon_points || 0, color: '#f59e0b' }]
+                    : [])
             ];
 
             let startX = 50;
-            const boxWidth = 120;
+            const boxWidth = SHOW_HACKATHON_IN_DAKSHATH ? 120 : 160;
             const boxHeight = 60;
 
             scoreBoxes.forEach((box, index) => {
@@ -177,7 +186,10 @@ const generateStudentProfilePDF = (profileData) => {
             const counts = [
                 { label: 'Courses Completed', value: score.courses_completed_count || 0 },
                 { label: 'Projects Approved', value: score.projects_approved_count || 0 },
-                { label: 'Hackathons', value: score.hackathons_approved_count || 0 }
+                // Kept for easy revert — gated by SHOW_HACKATHON_IN_DAKSHATH
+                ...(SHOW_HACKATHON_IN_DAKSHATH
+                    ? [{ label: 'Hackathons', value: score.hackathons_approved_count || 0 }]
+                    : [])
             ];
 
             counts.forEach(item => {
@@ -197,7 +209,13 @@ const generateStudentProfilePDF = (profileData) => {
             if (profileData.academic_performance.achievements && profileData.academic_performance.achievements.length > 0) {
                 addSectionHeader(doc, 'Recent Achievements', colors);
 
-                profileData.academic_performance.achievements.slice(0, 8).forEach((achievement, index) => {
+                const achievementsForPdf = SHOW_HACKATHON_IN_DAKSHATH
+                    ? profileData.academic_performance.achievements
+                    : profileData.academic_performance.achievements.filter(
+                        (a) => a.achievement_type !== 'hackathon_approval'
+                    );
+
+                achievementsForPdf.slice(0, 8).forEach((achievement, index) => {
                     const yPos = doc.y;
 
                     // Achievement item with background
@@ -219,11 +237,11 @@ const generateStudentProfilePDF = (profileData) => {
                     doc.y = yPos + 30;
                 });
 
-                if (profileData.academic_performance.achievements.length > 8) {
+                if (achievementsForPdf.length > 8) {
                     doc.fontSize(9)
                         .fillColor(colors.textLight)
                         .font('Helvetica-Oblique')
-                        .text(`... and ${profileData.academic_performance.achievements.length - 8} more achievements`, 50);
+                        .text(`... and ${achievementsForPdf.length - 8} more achievements`, 50);
                 }
                 doc.moveDown(1);
             }

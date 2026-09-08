@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
-import { Briefcase, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Briefcase, Mail, Lock, AlertCircle, ArrowLeft } from 'lucide-react';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import BackLink from '../../components/common/BackLink';
 
 const LoginPage = () => {
   const { isAuthenticated, login } = useAuth();
@@ -132,10 +133,13 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
+        <BackLink to="/" label="Back to Home" className="mb-4" />
         <div className="card">
           <div className="text-center mb-6">
-            <Briefcase className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dakshath</h1>
+            <Link to="/" className="inline-block">
+              <Briefcase className="w-16 h-16 text-primary mx-auto mb-4" />
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dakshath</h1>
+            </Link>
             <p className="text-gray-600">Job & Internship Platform</p>
           </div>
 
@@ -296,7 +300,7 @@ const LoginPage = () => {
           )}
 
           {/* Info Messages */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
             {loginType === 'student' && (
               <p className="text-sm text-gray-600 text-center">
                 Use your LMS account credentials to login
@@ -304,7 +308,10 @@ const LoginPage = () => {
             )}
             {loginType === 'hr' && (
               <p className="text-sm text-gray-600 text-center">
-                HR users: Use your company-provided credentials
+                HR users: Use your company-provided credentials.{' '}
+                <Link to="/register/company" className="text-primary hover:underline font-medium">
+                  Register company
+                </Link>
               </p>
             )}
             {loginType === 'admin' && (
@@ -312,6 +319,12 @@ const LoginPage = () => {
                 Admin: Use your shared LMS/Dakshath credentials
               </p>
             )}
+            <div className="text-center">
+              <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>

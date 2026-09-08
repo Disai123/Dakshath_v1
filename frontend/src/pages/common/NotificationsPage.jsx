@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { notificationService } from '../../services/notificationService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDate } from '../../utils/helpers';
 import { Bell, Check, CheckCheck } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const NotificationsPage = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -55,6 +58,10 @@ const NotificationsPage = () => {
 
   const unreadNotifications = notifications.filter(n => !n.is_read);
   const readNotifications = notifications.filter(n => n.is_read);
+  const dashboardPath =
+    user?.role === 'hr' ? '/hr/dashboard' :
+    user?.role === 'admin' ? '/admin/dashboard' :
+    '/dashboard';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,6 +70,7 @@ const NotificationsPage = () => {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
+            <BackLink to={dashboardPath} label="Back to Dashboard" />
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
               {unreadNotifications.length > 0 && (

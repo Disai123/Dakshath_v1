@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { jobService } from '../../services/jobService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -70,6 +71,7 @@ const JobManagementPage = () => {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
+            <BackLink to="/hr/dashboard" label="Back to Dashboard" />
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Job Listings</h1>
               <Link to="/hr/jobs/create" className="btn-primary inline-flex items-center gap-2">

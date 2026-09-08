@@ -9,7 +9,7 @@ const NotFoundPage = () => {
     if (user?.role === 'student') return '/dashboard';
     if (user?.role === 'hr') return '/hr/dashboard';
     if (user?.role === 'admin') return '/admin/dashboard';
-    return '/login';
+    return '/';
   };
 
   return (

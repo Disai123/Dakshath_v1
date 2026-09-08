@@ -8,6 +8,7 @@ import { jobService } from '../../services/jobService';
 import { Briefcase, FileText, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { SHOW_HACKATHON_IN_DAKSHATH } from '../../utils/constants';
 
 const StudentDashboard = () => {
   const { data: scoreData, isLoading: scoreLoading } = useQuery({
@@ -25,7 +26,11 @@ const StudentDashboard = () => {
     queryFn: () => jobService.getQualifiedJobs({ limit: 6 })
   });
 
-  const score = scoreData?.data?.total_points || 0;
+  const scorePayload = scoreData?.data;
+  // When hackathons are hidden, Total Points = courses + projects only (LMS total still includes hackathons).
+  const score = SHOW_HACKATHON_IN_DAKSHATH
+    ? (scorePayload?.total_points || 0)
+    : ((scorePayload?.total_course_points || 0) + (scorePayload?.total_project_points || 0));
   const applications = applicationsData?.data || [];
   const jobs = jobsData?.data || [];
 
@@ -80,39 +85,43 @@ const StudentDashboard = () => {
             {/* Score Display */}
             <div className="card mb-8">
               <h2 className="text-xl font-semibold mb-4">Your Academic Score</h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className={`grid grid-cols-1 ${SHOW_HACKATHON_IN_DAKSHATH ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-4`}>
+                <div className="text-center p-4 bg-primary-light rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Total Points</p>
-                  <p className="text-4xl font-bold text-blue-600">{scoreData?.data?.total_points || 0}</p>
+                  <p className="text-4xl font-bold text-primary">{score}</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Course Points</p>
-                  <p className="text-3xl font-bold text-green-600">{scoreData?.data?.total_course_points || 0}</p>
+                  <p className="text-3xl font-bold text-green-600">{scorePayload?.total_course_points || 0}</p>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-center p-4 bg-secondary-light rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Project Points</p>
-                  <p className="text-3xl font-bold text-purple-600">{scoreData?.data?.total_project_points || 0}</p>
+                  <p className="text-3xl font-bold text-secondary-dark">{scorePayload?.total_project_points || 0}</p>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
-                  <p className="text-3xl font-bold text-orange-600">{scoreData?.data?.total_hackathon_points || 0}</p>
-                </div>
+                {SHOW_HACKATHON_IN_DAKSHATH && (
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
+                    <p className="text-3xl font-bold text-orange-600">{scorePayload?.total_hackathon_points || 0}</p>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div className={`grid ${SHOW_HACKATHON_IN_DAKSHATH ? 'grid-cols-3' : 'grid-cols-2'} gap-4 pt-4 border-t`}>
                 <div>
                   <p className="text-sm text-gray-600">Courses Completed</p>
-                  <p className="text-xl font-bold">{scoreData?.data?.courses_completed_count || 0}</p>
+                  <p className="text-xl font-bold">{scorePayload?.courses_completed_count || 0}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Projects Approved</p>
-                  <p className="text-xl font-bold">{scoreData?.data?.projects_approved_count || 0}</p>
+                  <p className="text-xl font-bold">{scorePayload?.projects_approved_count || 0}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Hackathons</p>
-                  <p className="text-xl font-bold">{scoreData?.data?.hackathons_approved_count || 0}</p>
-                </div>
+                {SHOW_HACKATHON_IN_DAKSHATH && (
+                  <div>
+                    <p className="text-sm text-gray-600">Hackathons</p>
+                    <p className="text-xl font-bold">{scorePayload?.hackathons_approved_count || 0}</p>
+                  </div>
+                )}
               </div>
-              {scoreData?.data?.master_certificate_issued && (
+              {scorePayload?.master_certificate_issued && (
                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="font-semibold text-yellow-800">🎓 Master Certificate Issued</p>
                 </div>
@@ -196,5 +205,3 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
-
-

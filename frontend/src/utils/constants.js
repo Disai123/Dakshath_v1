@@ -1,5 +1,8 @@
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+// Set to true to show hackathon points/counts again in Dakshath UI (no DB change needed).
+export const SHOW_HACKATHON_IN_DAKSHATH = false;
+
 export const ROLES = {
   STUDENT: 'student',
   HR: 'hr',

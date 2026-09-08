@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { User, GraduationCap, Briefcase, FileText, Download, ArrowLeft, Mail, Phone, MapPin, Calendar, Award, Trophy, ExternalLink } from 'lucide-react';
+import { User, GraduationCap, Briefcase, FileText, Download, Mail, Phone, MapPin, Calendar, Award, Trophy, ExternalLink } from 'lucide-react';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
+import BackLink from '../../components/common/BackLink';
 import { studentService } from '../../services/studentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDate } from '../../utils/helpers';
+import { SHOW_HACKATHON_IN_DAKSHATH } from '../../utils/constants';
 
 const StudentProfileView = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [downloading, setDownloading] = useState(false);
 
     const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -76,6 +77,19 @@ const StudentProfileView = () => {
     const score = scoreData?.data;
     const achievements = achievementsData?.data;
 
+    // When hackathons are hidden, recompute count/points from visible groups only (API totals still include them).
+    const visibleAchievementGroups = Object.fromEntries(
+        Object.entries(achievements?.grouped || {}).filter(
+            ([type]) => SHOW_HACKATHON_IN_DAKSHATH || type !== 'hackathon_approval'
+        )
+    );
+    const visibleAchievementItems = Object.values(visibleAchievementGroups).flat();
+    const visibleAchievementCount = visibleAchievementItems.length;
+    const visibleAchievementPoints = visibleAchievementItems.reduce(
+        (sum, item) => sum + (Number(item.points_awarded) || 0),
+        0
+    );
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
@@ -85,13 +99,7 @@ const StudentProfileView = () => {
                     <div className="max-w-5xl mx-auto">
                         {/* Header with Back and Download */}
                         <div className="flex items-center justify-between mb-8">
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back
-                            </button>
+                            <BackLink to="/hr/applications" label="Back to Applications" className="mb-0" />
                             <button
                                 onClick={handleDownload}
                                 disabled={downloading}
@@ -294,25 +302,31 @@ const StudentProfileView = () => {
                         {/* Academic Score Section */}
                         <div className="card mb-6">
                             <h2 className="text-xl font-semibold mb-4">Academic Performance</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <div className={`grid grid-cols-2 ${SHOW_HACKATHON_IN_DAKSHATH ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-4`}>
+                                <div className="text-center p-4 bg-primary-light rounded-lg">
                                     <p className="text-sm text-gray-600 mb-1">Total Points</p>
-                                    <p className="text-3xl font-bold text-blue-600">{score?.total_points || 0}</p>
+                                    <p className="text-3xl font-bold text-primary">
+                                        {SHOW_HACKATHON_IN_DAKSHATH
+                                            ? (score?.total_points || 0)
+                                            : ((score?.total_course_points || 0) + (score?.total_project_points || 0))}
+                                    </p>
                                 </div>
                                 <div className="text-center p-4 bg-green-50 rounded-lg">
                                     <p className="text-sm text-gray-600 mb-1">Course Points</p>
                                     <p className="text-3xl font-bold text-green-600">{score?.total_course_points || 0}</p>
                                 </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-center p-4 bg-secondary-light rounded-lg">
                                     <p className="text-sm text-gray-600 mb-1">Project Points</p>
-                                    <p className="text-3xl font-bold text-purple-600">{score?.total_project_points || 0}</p>
+                                    <p className="text-3xl font-bold text-secondary-dark">{score?.total_project_points || 0}</p>
                                 </div>
-                                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                                    <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
-                                    <p className="text-3xl font-bold text-orange-600">{score?.total_hackathon_points || 0}</p>
-                                </div>
+                                {SHOW_HACKATHON_IN_DAKSHATH && (
+                                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Hackathon Points</p>
+                                        <p className="text-3xl font-bold text-orange-600">{score?.total_hackathon_points || 0}</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                            <div className={`grid ${SHOW_HACKATHON_IN_DAKSHATH ? 'grid-cols-3' : 'grid-cols-2'} gap-4 pt-4 border-t`}>
                                 <div>
                                     <p className="text-sm text-gray-600">Courses Completed</p>
                                     <p className="text-xl font-bold">{score?.courses_completed_count || 0}</p>
@@ -321,10 +335,12 @@ const StudentProfileView = () => {
                                     <p className="text-sm text-gray-600">Projects Approved</p>
                                     <p className="text-xl font-bold">{score?.projects_approved_count || 0}</p>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-600">Hackathons</p>
-                                    <p className="text-xl font-bold">{score?.hackathons_approved_count || 0}</p>
-                                </div>
+                                {SHOW_HACKATHON_IN_DAKSHATH && (
+                                    <div>
+                                        <p className="text-sm text-gray-600">Hackathons</p>
+                                        <p className="text-xl font-bold">{score?.hackathons_approved_count || 0}</p>
+                                    </div>
+                                )}
                             </div>
                             {score?.master_certificate_issued && (
                                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
@@ -335,18 +351,20 @@ const StudentProfileView = () => {
                         </div>
 
                         {/* Achievements Section */}
-                        {achievements?.achievements && achievements.achievements.length > 0 && (
+                        {visibleAchievementCount > 0 && (
                             <div className="card">
                                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                                     <Award className="w-5 h-5" />
-                                    Achievements ({achievements.total_count})
+                                    Achievements ({SHOW_HACKATHON_IN_DAKSHATH ? (achievements.total_count) : visibleAchievementCount})
                                 </h2>
-                                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                                <div className="mb-4 p-3 bg-primary-light rounded-lg">
                                     <p className="text-sm text-gray-600">Total Achievement Points</p>
-                                    <p className="text-2xl font-bold text-blue-600">{achievements.total_points || 0}</p>
+                                    <p className="text-2xl font-bold text-primary">
+                                        {SHOW_HACKATHON_IN_DAKSHATH ? (achievements.total_points || 0) : visibleAchievementPoints}
+                                    </p>
                                 </div>
                                 <div className="space-y-3">
-                                    {Object.entries(achievements.grouped || {}).map(([type, items]) => (
+                                    {Object.entries(visibleAchievementGroups).map(([type, items]) => (
                                         <div key={type} className="border border-gray-200 rounded-lg p-4">
                                             <h3 className="font-semibold mb-2 capitalize">{type.replace('_', ' ')}</h3>
                                             <div className="space-y-2">
